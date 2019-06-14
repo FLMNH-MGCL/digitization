@@ -1,0 +1,5 @@
+pillow
+numpy
+rawkit
+rawpy
+libraw.py
