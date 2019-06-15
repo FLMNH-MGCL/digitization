@@ -1,75 +1,80 @@
 import os
+import sys
+import platform
 
-def RenameInDir(ext, path, isRecursive):
-	print(" in Directory: " + path)
-	for filename in os.listdir(path):
-		#fn represents the new filename
-		fn = filename 
-		
-		# Only rename cr2 images
-		if (fn.find(ext) != -1):
-			# remove extension for now
-			fn = fn.replace(ext,"")
-			
-			#" (2)" becomes _V (Use the space to avoid double underscore
-			fn = fn.replace(" (2)","_V")
-			
-			# Spaces to Underscore
-			fn = fn.replace(" ", "_")
-			
-			# if not _V or _L or _D become _D
-			if (fn.find("_V") == -1 and fn.find("_L") == -1 and fn.find("_D") == -1):
-				fn += "_D"
-				
-			#Rename if the filename has changed (saves time and processing power)
-			if(filename != fn + ext):
-				os.rename(path + filename, path + fn +ext)
-		
-		# Recursion
-		if(isRecursive):
-			
-			if os.path.isdir(path + filename + "/"):
-				# Rename all files in child directories
-				RenameInDir(ext, path + filename + "/", isRecursive)
-	
+def GetSubDirs(path):
+    subdirectories = []
+    for img in os.listdir(path):
+        if os.path.isdir(path + img):
+            subdirectories.append(img)
+    return subdirectories
+
+def GetDirFiles(path):
+    files = []
+    for img in os.listdir(path):
+        if not os.path.isdir(path + img):
+            files.append(img)
+    return files
+
+def RecursiveRename(path):
+    subdirectories = GetSubDirs(path)
+    for dir in subdirectories:
+        RecursiveRename(path + dir + '\\')
+    Rename(path)
+
+def Rename(path):
+    ext = ".CR2"
+    print("\nWorking in... {}\n".format(path))
+
+    for filename in GetDirFiles(path):
+        # Separate ext and filename
+        new_name = filename.split('.')[0]
+
+        # instances of ' (2)' become _V
+        new_name = new_name.replace(" (2)", "_V")
+
+        # Spaces replaced with '_'
+        new_name = new_name.replace(' ', '_')
+
+        # If not _V nor _L nor _D, add _D 
+        if (new_name.find("_V") == -1 and new_name.find("_L") == -1 and new_name.find("_D") == -1):
+            new_name += "_D"
+
+        if filename != new_name + ext:
+            os.rename(path + filename, path + (new_name + ext))
+
+    print("Directory completed.")
+
 
 def main():
-	
-	# if you ever change from .CR2, edit the line below
-	ext = ".CR2"
-	
-	print("This program will help you rename " + ext + " files in a directory")
-	path = input("Please type the path of the directory: ")
-	method = input("\nChoose 1 of the following: \n [1]Standard (All " +ext+ " files in this directory level) \n [2]Recursive (All " + ext + " files in this directory level and every level below) \n --> ")
-	
-	# Valid paths must end in a separator, this checks and adds one
-	# Every os fs accepts "/", yup even Windows, cool right!?
-	if not path.endswith("/") or not path.endswith("\\"):
-		path += "/" 
-	
-	# [1] Standard
-	if method == "1":
-		isRecursive = False
-	
-	# [2] Recursive
-	elif method == "2":
-		isRecursive = True
-	
-	# Default to Standard
-	else:
-		print("\n " + method + " is not valid \n Defaulting to 1 \n --> 1")
-		isRecursive = False
-	
-	print("\nRenaming ...")
-	
-	RenameInDir(ext, path, isRecursive)
-	
-	# Program has completed
-	print("\n Done")
-	
-		
-#Driver code 
-if __name__ == '__main__': 
-      
-    # Calling main() function 
-    main() 
+    # target files = .CR2
+    ext = ".CR2"
+
+    # Trailing slash default to unix systems
+    trailing_slash = '/'
+    if platform.system().find("Windows"):
+        trailing_slash = '\\'
+
+    print("\nThis program will help you rename " + ext + " files in a directory")
+    path = input("Please type the path of the directory: ")
+    if not path.endswith(trailing_slash):
+        path += trailing_slash
+
+    method = input("\nChoose 1 of the following: \n [1]Standard (All " + ext + " files in this directory level) \n [2]Recursive (All " + ext + " files in this directory level and every level below) \n--> ")
+    
+    if method == '1':
+        Rename(path)
+
+    elif method == '2':
+        # Recursive
+        RecursiveRename(path)
+
+    else:
+        print("Input error.")
+        sys.exit(1)
+
+    print("\nProgram completed.\n")
+
+# Driver Code
+if __name__ == '__main__':
+    main()
