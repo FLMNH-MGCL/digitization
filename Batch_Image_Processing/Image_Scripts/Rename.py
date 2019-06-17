@@ -27,6 +27,9 @@ def Rename(path):
     print("\nWorking in... {}\n".format(path))
 
     for filename in GetDirFiles(path):
+        if filename.split('.')[1] != ext:
+            continue
+
         # Separate ext and filename
         new_name = filename.split('.')[0]
 
