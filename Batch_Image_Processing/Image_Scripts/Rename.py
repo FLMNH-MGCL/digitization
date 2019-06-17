@@ -34,7 +34,7 @@ def Rename(path):
         new_name = filename.split('.')[0]
 
         # instances of ' (2)' become _V
-        new_name = new_name.replace(" (2)", "_V")
+        new_name = new_name.replace("(2)", "_V")
 
         # Spaces replaced with '_'
         new_name = new_name.replace(' ', '_')
