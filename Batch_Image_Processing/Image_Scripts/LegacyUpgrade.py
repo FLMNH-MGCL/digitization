@@ -4,10 +4,12 @@ import csv
 import pandas as pd
 import numpy as np
 
-def WriteCSV(oldFiles, newFiles):
-	df = pd.DataFrame({'Old' : oldFiles, 'New' : newFiles})
-	df.to_csv('changed_filenames.csv', index=False, encoding='utf-8')
-		
+def WriteCSV(old_new_names):
+    df = pd.DataFrame.from_dict(list(old_new_names.items()))
+    df.columns = ['Old name', 'New name']
+    df.to_csv('changed_filenames.csv', index=False, encoding='utf-8')
+
+
 def GetDirs(path):
     dirs = []
     for folder in os.listdir(path):
@@ -32,13 +34,7 @@ def CountDigits(string):
 
 
 def main():
-    # get directory containing genus folders
-    
-    temp1 = ["old1", "old2"]
-    temp2 = ["new1", "new2"]
-    WriteCSV(temp1,temp2)
-    return
-    
+    # get directory containing genus folders    
     parent_path = input('\nPlease input the path to the directory that contains the Genus folders: ')
     genuses = GetDirs(parent_path)
     old_new_names = dict()
@@ -52,6 +48,7 @@ def main():
             for img in collection:
                 # parse and rename image name
                 new_name = NewName(img.split('.')[0])
+                print(new_name)
 
                 # check digits for error
                 num = CountDigits(new_name)
@@ -77,11 +74,12 @@ def main():
                 os.rename(working_path + img, working_path + (new_name + ext))
 
                 # store old vs new filename pairs
-                old_new_names[img] = new_name + ext
+                old_new_names[str(img)] = str(new_name + ext)
 
             # store duplicate paths somewhere
 
     # write old vs new filename pairs to CSV file
+    WriteCSV(old_new_names)
 
 
 # Driver
