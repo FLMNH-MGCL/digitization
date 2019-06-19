@@ -1,8 +1,8 @@
 import os
 import re
-import csv
-import pandas as pd
-import numpy as np
+#import csv
+#import pandas as pd
+#import numpy as np
 
 #def WriteCSV(old_new_names):
 #    df = pd.DataFrame.from_dict(list(old_new_names.items()))
@@ -50,6 +50,9 @@ def CountDigits(string):
 def main():
     # get directory containing genus folders    
     parent_path = input('\nPlease input the path to the directory that contains the Genus folders: ')
+    
+    # ask user where they would like to store the changed file names CSV file and what to save it as
+    # filename = input('\nPlease privde the path (including the desired name) to save a CSV file of filename changes: ')
     
     # add trailing slash if not present
     if not parent_path.endswith('/'):
@@ -99,7 +102,7 @@ def main():
                     print("Old name: {0} New name: {1}".format(img, (new_name + ext)))
 
                     # rename photo
-                    working_path = collection_path
+                    # working_path = collection_path
                     # os.rename(working_path + img, working_path + (new_name + ext)) UNCOMMENT WHEN TESTING COMPLETE
 
                     # store old vs new filename pairs
