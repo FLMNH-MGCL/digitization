@@ -1,13 +1,19 @@
 import os
 import re
-import csv
-import pandas as pd
-import numpy as np
+#import csv
+#import pandas as pd
+#import numpy as np
+
+#def WriteCSV(old_new_names):
+#    df = pd.DataFrame.from_dict(list(old_new_names.items()))
+#    #df.columns = ['Old name', 'New name', 'third']
+#    df.to_csv('changed_filenames.csv', index=False, encoding='utf-8')
 
 def WriteCSV(old_new_names):
-    df = pd.DataFrame.from_dict(list(old_new_names.items()))
-    #df.columns = ['Old name', 'New name', 'third']
-    df.to_csv('changed_filenames.csv', index=False, encoding='utf-8')
+    f = open("test_csv.csv", "w+")
+    f.write("Old filenames,New filenames\n")
+    for old_name,new_name in old_new_names:
+        f.write(old_name + ',' + new_name + '\n')
 
 
 def GetDirs(path):
@@ -44,34 +50,44 @@ def CountDigits(string):
 def main():
     # get directory containing genus folders    
     parent_path = input('\nPlease input the path to the directory that contains the Genus folders: ')
+    
+    # ask user where they would like to store the changed file names CSV file and what to save it as
+    # filename = input('\nPlease privde the path (including the desired name) to save a CSV file of filename changes: ')
+    
+    # add trailing slash if not present
+    if not parent_path.endswith('/'):
+        parent_path += '/'
+
     genuses = GetDirs(parent_path)
+
     print (parent_path)
-    old_new_names = dict()
+    old_new_names = list()
 
     for genus in genuses:
         print(genus)
-        species = GetDirs(parent_path + genus + '/')
+        species_path = parent_path + genus + '/'
+        species = GetDirs(species_path)
         for spec in species:
             print (spec)
-            dates = GetDirs(parent_path + genus + '/' + spec + '/')
+            date_path = species_path + spec + '/'
+            dates = GetDirs(date_path)
             for date in dates:
-                collection = GetPics(parent_path + genus + '/' + spec + '/' + date + '/')
+                collection_path = date_path + date + '/'
+                collection = GetPics(collection_path)
                 visited = dict()
                 duplicates = []
                 for img in collection:
-                    print(img)
                     # parse and rename image name
                     new_name = NewName(img.split('.')[0])
-                    print(new_name)
 
                     # check digits for error
                     num = CountDigits(new_name)
                     if num != 7:
                         # mark as DIGERROR
-                        new_name += 'DIGERROR'
+                        new_name += '_DIGERROR'
 
                     # extract file name w/o extension
-                    ext = img.split('.')[1]
+                    ext = '.' + img.split('.')[1]
 
                     # 'visit' the picture id and check for duplicate
                     id = new_name.split('_')[1]
@@ -83,12 +99,14 @@ def main():
                     else:
                         visited[id] = 0
 
-                # rename photo
-                working_path = parent_path + genus + '/' + spec + '/' + date + '/'
-                os.rename(working_path + img, working_path + (new_name + ext))
+                    print("Old name: {0} New name: {1}".format(img, (new_name + ext)))
 
-                # store old vs new filename pairs
-                old_new_names[str(img)] = str(new_name + ext)
+                    # rename photo
+                    # working_path = collection_path
+                    # os.rename(working_path + img, working_path + (new_name + ext)) UNCOMMENT WHEN TESTING COMPLETE
+
+                    # store old vs new filename pairs
+                    old_new_names.append(tuple((img, (new_name + ext))))
 
             # store duplicate paths somewhere
 
