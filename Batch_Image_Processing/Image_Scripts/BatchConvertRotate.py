@@ -1,6 +1,7 @@
 import os
 import sys
 import rawpy
+import imageio
 
 def GetSubDirs(path):
     subdirectories = []
@@ -21,7 +22,15 @@ def ConvertAndRotate(path):
     print("\nWorking in... {}\n".format(path))
 
     for img in GetDirFiles(path):
-        # insert rawpy code here
+        
+        # how to read image
+        with rawpy.imread(path) as raw:
+            newImage = raw.postprocess(use_camera_wb = True, user_flip = 5, auto_bright_thr = 0.000015)
+        
+        # save image
+        imageio.imsave(img.splitext('.')[0] + ".jpg", newImage, quality = 100, dpi = tuple((300,300)))
+        imageio.help(name = 'jpg')
+        
         print('\n{} has been converted / rotated.'.format(img))
 
 def RecursiveConvertAndRotate(path):
