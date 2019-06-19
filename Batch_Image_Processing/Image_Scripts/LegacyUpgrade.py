@@ -79,7 +79,11 @@ def main():
             # store duplicate paths somewhere
 
     # write old vs new filename pairs to CSV file
-    WriteCSV(old_new_names)
+    for x in old_new_names:
+        print(x)
+        for y in old_new_names[x]:
+            print(y, ':', old_new_names[x][y])
+    #WriteCSV(old_new_names)
 
 
 # Driver
