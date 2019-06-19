@@ -44,18 +44,27 @@ def CountDigits(string):
 def main():
     # get directory containing genus folders    
     parent_path = input('\nPlease input the path to the directory that contains the Genus folders: ')
+    
+    # add trailing slash if not present
+    if not parent_path.endswith('/'):
+        parent_path += '/'
+
     genuses = GetDirs(parent_path)
+
     print (parent_path)
     old_new_names = dict()
 
     for genus in genuses:
         print(genus)
-        species = GetDirs(parent_path + genus + '/')
+        species_path = parent_path + genus + '/'
+        species = GetDirs(species_path)
         for spec in species:
             print (spec)
-            dates = GetDirs(parent_path + genus + '/' + spec + '/')
+            date_path = species_path + spec + '/'
+            dates = GetDirs(date_path)
             for date in dates:
-                collection = GetPics(parent_path + genus + '/' + spec + '/' + date + '/')
+                collection_path = date_path + date + '/'
+                collection = GetPics(collection_path)
                 visited = dict()
                 duplicates = []
                 for img in collection:
@@ -84,8 +93,8 @@ def main():
                         visited[id] = 0
 
                 # rename photo
-                working_path = parent_path + genus + '/' + spec + '/' + date + '/'
-                os.rename(working_path + img, working_path + (new_name + ext))
+                working_path = collection_path
+                # os.rename(working_path + img, working_path + (new_name + ext)) UNCOMMENT WHEN TESTING COMPLETE
 
                 # store old vs new filename pairs
                 old_new_names[str(img)] = str(new_name + ext)
