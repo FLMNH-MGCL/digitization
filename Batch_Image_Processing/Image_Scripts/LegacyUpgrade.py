@@ -93,6 +93,7 @@ def main():
                     id = new_name.split('_')[1]
                     if id in visited.keys():
                         if visited[id] == 2:
+                            # new_name += 'DUPL' + ext
                             duplicates.append(new_name + ext)
                         else:
                             visited[id] += 1
