@@ -18,7 +18,7 @@ def GetDirFiles(path):
     return files
 
 def ConvertAndRotate(path):
-    ext = '.CR2'
+    #ext = '.CR2'
     print("\nWorking in... {}\n".format(path))
 
     for img in GetDirFiles(path):
@@ -29,7 +29,6 @@ def ConvertAndRotate(path):
         
         # save image
         imageio.imsave(path + img.splitext('.')[0] + ".jpg", newImage, quality = 100, dpi = tuple((300,300)))
-        imageio.help(name = 'jpg')
         
         print('\n{} has been converted / rotated.'.format(img))
 
