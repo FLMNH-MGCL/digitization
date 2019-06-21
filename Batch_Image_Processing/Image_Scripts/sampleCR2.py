@@ -8,7 +8,7 @@ def ConvertAndRotate(path):
     # how to read image    
     with rawpy.imread(path) as raw:
         newImage = raw.postprocess(use_camera_wb = True, user_flip = 5, dcb_enhance = True, exp_preserve_highlights = 1, bright = .75)
-        imageio.imsave('default' + '.jpg', newImage, quality = 92, dpi = tuple((300,300)))
+        imageio.imsave('default' + '.jpg', newImage, quality = 100, dpi = tuple((300,300)))
         
     #imageio.help(name = 'jpg')
 
