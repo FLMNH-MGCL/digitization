@@ -1,3 +1,7 @@
+#    MGCL 3947933    --> MGCL_3947933_D
+#    MGCL 3947933(2) --> MGCL_3947933_V
+#    MGCL 3947933_L  --> MGCL_3947933_L
+
 import os
 import sys
 import platform
