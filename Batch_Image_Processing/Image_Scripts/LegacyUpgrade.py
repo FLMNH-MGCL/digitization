@@ -1,13 +1,5 @@
 import os
 import re
-#import csv
-#import pandas as pd
-#import numpy as np
-
-#def WriteCSV(old_new_names):
-#    df = pd.DataFrame.from_dict(list(old_new_names.items()))
-#    #df.columns = ['Old name', 'New name', 'third']
-#    df.to_csv('changed_filenames.csv', index=False, encoding='utf-8')
 
 def WriteCSV(old_new_names):
     f = open("test_csv.csv", "w+")
@@ -93,16 +85,15 @@ def main():
                     id = new_name.split('_')[1]
                     if id in visited.keys():
                         if visited[id] == 2:
-                            # new_name += 'DUPL' + ext
+                            # new_name += '_DUPL' + ext
                             duplicates.append(new_name + ext)
                         else:
                             visited[id] += 1
                     else:
                         visited[id] = 0
 
-                    print("Old name: {0} New name: {1}".format(img, (new_name + ext)))
+                    # print("Old name: {0} New name: {1}".format(img, (new_name + ext)))
 
-                    # rename photo
                     # working_path = collection_path
                     # os.rename(working_path + img, working_path + (new_name + ext)) UNCOMMENT WHEN TESTING COMPLETE
 
@@ -112,11 +103,7 @@ def main():
             # store duplicate paths somewhere
 
     # write old vs new filename pairs to CSV file
-    for x in old_new_names:
-        print(x)
-        for y in old_new_names[x]:
-            print(y, ':', old_new_names[x][y])
-    #WriteCSV(old_new_names)
+    WriteCSV(old_new_names)
 
 
 # Driver
