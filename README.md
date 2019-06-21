@@ -3,7 +3,7 @@ This reposity serves as a collection of scripts developed to help improve the wo
 
 ### Installation
 
-Although they are not quite ready for deployment, hese scripts will require [Python3](https://www.python.org/downloads/release/python-373/) to run, as well as a few extra Python modules. We are in the process of creating a script to auto-install these dependencies for you, however, so the process will be as simple as: 
+Although they are not quite ready for deployment, these scripts will require [Python3](https://www.python.org/downloads/release/python-373/) to run, as well as a few extra Python modules. We are in the process of creating a script to auto-install these dependencies for you, however, so the process will be as simple as: 
 
 ```sh
 $ cd FLMNH/Batch_Image_Processing/Image_Scripts/
