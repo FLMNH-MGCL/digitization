@@ -10,7 +10,7 @@ import tkinter.messagebox
 
 class GUI:
     window = None
-    target_dir =  None
+    target_dir = None
     recursively = False
 
     def __init__(self, window):
@@ -22,6 +22,7 @@ class GUI:
 
 
     def Run(self):
+        # check if user hit run before selected target folder
         if self.target_dir == None:
             tkinter.messagebox.showerror(title='User Error', message='You must select a path first')
             return
@@ -51,7 +52,7 @@ class GUI:
             "select whether or not to run the algorithm recursively and then hit run.\n\nTo run the algorithm recursively" \
             " means that in addition to the target directory, every subdirectory underneath will also undergo the renaming." \
             " For example, if you target the folder /home/user/target/ and that folder contains a folder called random, if " \
-            "you run without recursion they only files inside target are changed. If you run recursively, files that are also " \
+            "you run without recursion then only files inside target are changed. If you run recursively, files that are also " \
             "inside the subfolder random (and files within any additional subfolders) will be renamed.\n\n" \
             "All changes are temporarily recorded in the program, so if you want to undo what the script did just hit the undo " \
             "button BEFORE you close the window!"
@@ -64,23 +65,29 @@ class GUI:
 
 
     def InitWindow(self, window):
+        # ***** GENERAL WINDOW ***** #
         window.geometry("500x300")
         window.title('FLMNH File Rename Tool')
+        
+        # ***** TOP MENU ***** #
         menu = Menu(window)
         window.config(menu=menu)
-
         subMenu = Menu(menu)
         menu.add_cascade(label="Help", menu=subMenu)
         subMenu.add_command(label="Usage", command=self.HelpPromt)
 
+        # ***** BUTTONS ***** #
         button = Button(window, text="Select Folder", command=self.SelectFolder)
         button.pack()
+
+        recursive_button = Button(window, text="Recursive", command=self.ToggleRecursive)
+        recursive_button.pack()
 
         run_button = Button(window, text="Run", command=self.Run)
         run_button.pack()
 
-        recursive_button = Button(window, text="Recursive", command=self.ToggleRecursive)
-        recursive_button.pack()
+        undo_button = Button(window, text="Undo Changes")
+        undo_button.pack()
 
         # ***** STATUS BAR ***** #
         status = Label(window, text="Waiting...", bd=1, relief=SUNKEN, anchor=W)

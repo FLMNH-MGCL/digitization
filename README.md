@@ -7,6 +7,6 @@ Although they are not quite ready for deployment, these scripts will require [Py
 
 ```sh
 $ cd FLMNH/Batch_Image_Processing/Image_Scripts/
-$ pip install -r requirements.txt
+$ pip3 install -r requirements.txt
 $ pyhton name_of_script.py
 ```
