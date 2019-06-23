@@ -5,13 +5,17 @@
 import os
 import sys
 from tkinter import *
+from tkinter import StringVar
 from tkinter import filedialog
 import tkinter.messagebox
+
+old_new_names = []
 
 class GUI:
     window = None
     target_dir = None
     recursively = False
+    #status_message = None
 
     def __init__(self, window):
         self.window = self.InitWindow(window)
@@ -21,7 +25,7 @@ class GUI:
         self.window.mainloop()
 
 
-    def Run(self):
+    def Run(self, status_message):
         # check if user hit run before selected target folder
         if self.target_dir == None:
             tkinter.messagebox.showerror(title='User Error', message='You must select a path first')
@@ -31,18 +35,34 @@ class GUI:
         if not self.target_dir.endswith('/') or not self.target_dir.endswith('\\'):
             self.target_dir += '/'
 
-        # check method
+        # no errors up to this point, renaming will run so update status
+        status_message.set('Running...')
+
+        # check method (single directory or recursive renaming)
         if not self.recursively:
             Rename(self.target_dir)
 
         elif self.recursively:
             RecursiveRename(self.target_dir)
 
+        status_message.set('Finished...')
 
-    def ToggleRecursive(self):
-        if self.recursively:
+
+    def Undo(self, status_message):
+        # call non-class Undo function
+        message = Undo()
+
+        # update status bar / pop up message for error
+        if message == 'There is nothing to undo.':
+            tkinter.messagebox.showerror(title='User error', message=message)
+        else:
+            status_message.set(message)
+
+
+    def ToggleRecursive(self, value):
+        if value == 0:
             self.recursively = False
-        elif not self.recursively:
+        elif value == 1:
             self.recursively = True
 
 
@@ -68,6 +88,14 @@ class GUI:
         # ***** GENERAL WINDOW ***** #
         window.geometry("500x300")
         window.title('FLMNH File Rename Tool')
+        #window.config(background='seashell3')
+        window.config(background='dimgray')
+
+        # ***** STATUS BAR ***** #
+        status_message = StringVar()
+        status = Label(window, textvariable=status_message, bd=1, relief=SUNKEN, anchor=W)
+        status_message.set("Waiting...")
+        status.pack(side=BOTTOM, fill=X)
         
         # ***** TOP MENU ***** #
         menu = Menu(window)
@@ -80,18 +108,18 @@ class GUI:
         button = Button(window, text="Select Folder", command=self.SelectFolder)
         button.pack()
 
-        recursive_button = Button(window, text="Recursive", command=self.ToggleRecursive)
-        recursive_button.pack()
+        toggle = IntVar()
+        recursion_checkbox = Checkbutton(window, text='Recursive', variable=toggle, command= lambda: self.ToggleRecursive(toggle.get()))
+        recursion_checkbox.pack()
 
-        run_button = Button(window, text="Run", command=self.Run)
+        run_button = Button(window, text="Run", command= lambda: self.Run(status_message))
         run_button.pack()
 
-        undo_button = Button(window, text="Undo Changes")
+        undo_button = Button(window, text="Undo Changes", command= lambda: self.Undo(status_message))
         undo_button.pack()
 
-        # ***** STATUS BAR ***** #
-        status = Label(window, text="Waiting...", bd=1, relief=SUNKEN, anchor=W)
-        status.pack(side=BOTTOM, fill=X)
+        quit_button = Button(window, text='Quit', command=window.destroy)
+        quit_button.pack()
 
         return window
 
@@ -116,7 +144,7 @@ def GetDirFiles(path):
 def RecursiveRename(path):
     subdirectories = GetSubDirs(path)
     for dir in subdirectories:
-        RecursiveRename(path + dir + '\\')
+        RecursiveRename(path + dir + '/')
     Rename(path)
 
 def Rename(path):
@@ -143,9 +171,24 @@ def Rename(path):
 
         if filename != new_name + ext:
             #os.rename(path + filename, path + (new_name + ext))
+            old_new_names.append(tuple((path + filename, path + (new_name + ext))))
             print(new_name + ext)
 
     print("Directory completed.")
+
+
+def Undo():
+    # check if there is anything to undo
+    if len(old_new_names) == 0:
+        return 'There is nothing to undo.'
+
+    return 'This function needs to be tested first'
+
+    # old_new_names list of tuples must include the paths!
+    for old_name,new_name in old_new_names:
+        os.rename(new_name, old_name)
+
+    return 'Changes have been reversed.'
 
 
 def main():
@@ -171,12 +214,12 @@ def main():
             print("Input error.")
             sys.exit(1)
 
-        print("\nProgram completed.\n")
-
     elif choice == '2':
         window = Tk()
         my_gui = GUI(window)
         my_gui.mainloop()
+
+    print("\nProgram completed.\n")
 
 # Driver Code
 if __name__ == '__main__':
