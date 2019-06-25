@@ -12,5 +12,5 @@ $ pyhton name_of_script.py
 ```
 
 ### Other Projects
-More robust projects for the museum will be separated from this script collection repository and linked here!
+More robust projects for the museum will be separated from this script collection repository and linked here!  
 [DataMatrix-Reader](https://github.com/aaronleopold/DataMatrix-Reader)
