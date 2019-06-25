@@ -10,3 +10,7 @@ $ cd FLMNH/Batch_Image_Processing/Image_Scripts/
 $ pip3 install -r requirements.txt
 $ pyhton name_of_script.py
 ```
+
+### Other Projects
+More robust projects for the museum will be separated from this script collection repository and linked here!
+[DataMatrix-Reader](https://github.com/aaronleopold/DataMatrix-Reader)

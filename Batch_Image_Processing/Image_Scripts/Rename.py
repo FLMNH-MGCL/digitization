@@ -11,6 +11,9 @@ import tkinter.messagebox
 
 old_new_names = []
 
+##############################
+# ******** GUI CODE ******** #
+
 class GUI:
     window = None
     target_dir = None
