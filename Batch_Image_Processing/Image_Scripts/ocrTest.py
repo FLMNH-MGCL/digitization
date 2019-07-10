@@ -6,6 +6,7 @@ import os
 import sys
 import time
 from statistics import mean
+import cv2
 
 # using the following tutorial:
 # https://www.tensorscience.com/ocr/optical-character-recognition-ocr-with-python-and-tesseract-4-an-introduction
@@ -21,14 +22,27 @@ def GetDirFiles(path):
 def GetCatalogueNumber(imPath): 
     # Convert to Greyscale
 
-    im = Image.open(imPath)
+    im = cv2.imread(imPath)
+    
+    # Grayscale
+    gray = cv2.cvtColor(im, cv2.COLOR_BGR2GRAY)
+
+    # Preprocess
+    gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
+
+    # Blur
+    gray = cv2.medianBlur(gray, 3)
 
     # im = im.convert('L')
     
     # Binarization
     # im = im.point(lambda x: 0 if x<128 else 255, '1') 
 
-    imStr = pytesseract.image_to_string(im)
+    # imStr1 = pytesseract.image_to_string(im)
+
+    imStr = pytesseract.image_to_string(gray)
+
+    imStr += "\n Next: \n"
 
     return imStr
 
