@@ -55,6 +55,10 @@ def main():
     print (parent_path)
     old_new_names = list()
 
+    """
+        this assumes the following folder structure:
+            main folder -> genus -> species -> collection date -> *actual images*
+    """
     for genus in genuses:
         print(genus)
         species_path = parent_path + genus + '/'
