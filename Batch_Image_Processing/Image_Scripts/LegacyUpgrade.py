@@ -196,9 +196,9 @@ def Upgrade(parent_directory):
                     if len(img_vec) > 1:
                         # check for duplicate
                         if new_name in visited.keys():
-                            new_name += '_DUPL'
                             is_duplicate = True
                             visited[new_name] += 1
+                            new_name += '_DUPL'
                         else:
                             visited[new_name] = 0
 
