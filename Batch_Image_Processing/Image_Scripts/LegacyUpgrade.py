@@ -164,6 +164,10 @@ This assumes the following folder structure:
     ../families/genera/collection_dates/*specimen images here*
 """
 def Upgrade(parent_directory):
+    global old_new_paths
+    global duplicates
+    global unknowns
+
     print("\nProgram starting...")
     time.sleep(1)
     families = GetDirs(parent_directory) # all the family folders
@@ -186,24 +190,23 @@ def Upgrade(parent_directory):
                     old_name = specimen.split('.')[0]
                     new_name = GetNewName(old_name)
 
-                    # check digits for error (requires exactly 7 digits)
-                    if CountDigits(new_name) != 7:
-                        print(specimen + ': File has digit error.')
-                        new_name += '_DIGERROR'
-                        has_digerror = True
+                    img_vec = new_name.split('_')
 
                     # check for duplicates
-                    img_vec = new_name.split('_')
                     if len(img_vec) > 1:
-                        id = img_vec[1]
-                        if id in visited.keys():
-                            if visited[id] == 2:
-                                new_name += '_DUPL'
-                                is_duplicate = True
-                            else:
-                                visited[id] += 1
+                        # check for duplicate
+                        if new_name in visited.keys():
+                            new_name += '_DUPL'
+                            is_duplicate = True
+                            visited[new_name] += 1
                         else:
-                            visited[id] = 0
+                            visited[new_name] = 0
+
+                        # check digits for error (requires exactly 7 digits)
+                        if CountDigits(img_vec[1]) != 7:
+                            print(specimen + ': File has digit error.')
+                            new_name += '_DIGERROR'
+                            has_digerror = True
 
                     else:
                         print(specimen + ': Unknown file formatting.')
@@ -233,3 +236,11 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+"""
+KNOWN BUGS:
+    (2) counted as dig error (should be fixed)
+    _2 counted as dig error (should be fixed)
+    not duplicates if diff orientations ?
+    fix duplicate calc, Dorsal Dorsal Ventral not counted (example)
+"""
