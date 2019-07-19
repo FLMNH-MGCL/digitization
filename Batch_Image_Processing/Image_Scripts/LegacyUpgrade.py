@@ -1,111 +1,235 @@
 import os
 import re
+import time
 
-def WriteCSV(old_new_names):
-    f = open("test_csv.csv", "w+")
-    f.write("Old filenames,New filenames\n")
-    for old_name,new_name in old_new_names:
-        f.write(old_name + ',' + new_name + '\n')
+old_new_paths = []
+duplicates = []
+unknowns = []
+valid_imgs = ['JPG', 'jpg', 'jpeg', 'JPEG', 'CR2', 'cr2']
+
+def AskUsage():
+    prompt = str(
+            "\nThis program will upgrade the legacy server data to fit the new standardized filename structure. " \
+            "It will first ask for you to input the directory containing the specimen images, alternatively " \
+            "you may drag the folder into the terminal window on mac platforms. From there, the program will " \
+            "attempt to rename all valid image files in the folder. When it is done, you will have the chance " \
+            "to choose whether or not to: delete any duplicates found, undo changes or repeat program in a new " \
+            "directory. 5 seconds after asking for this prompt you may begin. "
+        )
+    wanted = input("\nDo you want to see the usage information?\n [1]yes\n [2]no\n --> ")
+    if wanted == '1' or wanted == 'y' or wanted == 'yes':
+        print(prompt)
+        time.sleep(5)
+
+
+def IsValid(extension):
+    if extension in valid_imgs:
+        return True
+    else: 
+        return False
+
+
+def DirPrompt():
+    parent_directory = input('\nPlease input the path to the directory that contains the images: ')
+    parent_directory = parent_directory.strip()
+
+    if not parent_directory.endswith('/') or not parent_directory.endswith('\\'):
+        parent_directory += '/'
+
+    while not os.path.exists(parent_directory) or not os.path.isdir(parent_directory):
+        print("\nCould not find path in filesystem or is not a directory...")
+        parent_directory = input('\nPlease input the path to the directory that contains the images: ')
+        parent_directory = parent_directory.strip()
+
+        if not parent_directory.endswith('/') or not parent_directory.endswith('\\'):
+            parent_directory += '/'
+
+    return parent_directory
 
 
 def GetDirs(path):
     dirs = []
-    for folder in os.listdir(path):
+    for folder in sorted(os.listdir(path)):
         if os.path.isdir(path + folder):
             dirs.append(folder)
     return dirs
 
 
-def GetPics(path):
+def GetImages(path):
     imgs = []
-    for img in os.listdir(path):
+    for img in sorted(os.listdir(path)):
         if os.path.isfile(path + img):
-            imgs.append(img)
+            img_vec = img.split('.')
+            if len(img_vec) > 1 and IsValid(img_vec[1]):
+                imgs.append(img)
     return imgs
 
 
-def NewName(old_name):
-    # remove male/female distinction
+def GetNewName(old_name):
+    # remove male / female distinction
     new_name = old_name
     new_name = new_name.replace("_M", "")
     new_name = new_name.replace("_F", "")
 
-    # substitute repeating underscores with single underscore
+    # sub repeating underscores with single underscore
     new_name = re.sub("\_+", "_", new_name)
+
     return new_name
 
 
+def FixDateFormat(date, path):
+    return date
+
+
 def CountDigits(string):
-	return sum(c.isdigit() for c in string)
+    return sum(c.isdigit() for c in string)
+
+
+def DeleteDupl():
+    for old_name,new_name in duplicates:
+        try:
+            os.remove(new_name)
+        except:
+            print("Could not find file.")
+
+
+def Undo():
+    valid_choice = False
+    ret_str = ""
+    while not valid_choice:
+        choice = input("Do you want to:\n [1]undo ALL changes\n [2]leave errors and duplicates renamed?\n --> ")
+        return "Undo will be functional after testing..."
+        if choice == '1' or choice == 'all':
+            valid_choice = True
+            for old_path,new_path in old_new_paths:
+                os.rename(new_path, old_path)
+            for old_path,new_path in unknowns:
+                os.rename(new_path, old_path)
+            for old_path,new_path in duplicates:
+                os.rename(new_path, old_path)
+
+            ret_str = "All changes undone. Original state restored."
+
+        elif choice == '2':
+            valid_choice = True
+            for old_path,new_path in old_new_paths:
+                os.rename(new_path, old_path)
+
+            ret_str = "Only valid images were reverted to original state. All others left as is."
+        else:
+            print("Invalid choice.")
+
+    return ret_str
+
+
+def Wait():
+    time.sleep(5)
+
+    wait = True
+    print("Program completed... Please review changes.")
+
+    delete_dupl = input("Do you wish to delete any found duplicates?\n [1]yes\n [2]no\n --> ")
+    if delete_dupl == '1' or delete_dupl == 'y' or delete_dupl == 'yes':
+        double_check = input("Are you sure? This cannot be undone!!\n [1]yes\n [2]no\n --> ")
+        if double_check == '1' or double_check == 'y' or double_check == 'yes':
+            # DeleteDupl()
+            print("Deleting will be functional after proper testing...")
+
+    while wait == True:
+        undo = input("Do you wish to undo?\n [1]yes\n [2]no\n --> ")
+        if undo == '1' or undo == 'y' or undo =='yes':
+            print(Undo())
+            wait = False
+        elif undo == '2' or undo == 'n' or undo == 'no':
+            wait = False
+        else:
+            print('Input error. Invalid option.')
+            continue
+
+    repeat = input ("Do you want to repeat program in a new parent directory?\n [1]yes\n [2]no\n --> ")
+    if repeat == '1' or repeat == 'y' or repeat == 'yes':
+        old_new_paths.clear()
+        duplicates.clear()
+        unknowns.clear()
+        AskUsage()
+        Upgrade(DirPrompt())
+    else:
+        print("Exiting...")
+        time.sleep(2)
+
+
+# main upgrading code
+"""
+This assumes the following folder structure:
+    ../families/genera/collection_dates/*specimen images here*
+"""
+def Upgrade(parent_directory):
+    print("\nProgram starting...")
+    time.sleep(1)
+    families = GetDirs(parent_directory) # all the family folders
+    for family in families:
+        genera = GetDirs(parent_directory + family + '/') # all the genus folders
+        for genus in genera:
+            collection = GetDirs(parent_directory + family + '/' + genus + '/') # all the date folders
+            for date in collection:
+                # ensures proper dating of collection folder
+                # date = FixDateFormat(date, parent_directory + family + '/' + genus + '/')
+
+                working_directory = parent_directory + family + '/' + genus + '/' + date + '/'
+                specimens = GetImages(working_directory)
+                visited = dict()
+                for specimen in specimens:
+                    is_unknown = False
+                    has_digerror = False
+                    is_duplicate = False
+                    extension = '.' + specimen.split('.')[1]
+                    old_name = specimen.split('.')[0]
+                    new_name = GetNewName(old_name)
+
+                    # check digits for error (requires exactly 7 digits)
+                    if CountDigits(new_name) != 7:
+                        print(specimen + ': File has digit error.')
+                        new_name += '_DIGERROR'
+                        has_digerror = True
+
+                    # check for duplicates
+                    img_vec = new_name.split('_')
+                    if len(img_vec) > 1:
+                        id = img_vec[1]
+                        if id in visited.keys():
+                            if visited[id] == 2:
+                                new_name += '_DUPL'
+                                is_duplicate = True
+                            else:
+                                visited[id] += 1
+                        else:
+                            visited[id] = 0
+
+                    else:
+                        print(specimen + ': Unknown file formatting.')
+                        new_name += 'UNKNOWN'
+                        is_unknown = True
+
+                    new_name += extension
+                    old_path = working_directory + specimen
+                    new_path = working_directory + new_name
+                    if is_unknown:
+                        unknowns.append(tuple((old_path, new_path)))
+                    elif is_duplicate:
+                        duplicates.append(tuple((old_path, new_path)))
+                    else:
+                        old_new_paths.append(tuple((old_path, new_path)))
+                    #os.rename(old_path, new_path)
+                    print("\nRenaming {} as {}\n".format(old_path, new_path))
+
+    print("All images handled. Please hold...\n")
+    Wait()
 
 
 def main():
-    # get directory containing genus folders    
-    parent_path = input('\nPlease input the path to the directory that contains the Genus folders: ')
-    
-    # ask user where they would like to store the changed file names CSV file and what to save it as
-    # filename = input('\nPlease privde the path (including the desired name) to save a CSV file of filename changes: ')
-    
-    # add trailing slash if not present
-    if not parent_path.endswith('/'):
-        parent_path += '/'
+    AskUsage()
+    parent_directory = DirPrompt()
+    Upgrade(parent_directory)
 
-    genuses = GetDirs(parent_path)
-
-    print (parent_path)
-    old_new_names = list()
-
-    for genus in genuses:
-        print(genus)
-        species_path = parent_path + genus + '/'
-        species = GetDirs(species_path)
-        for spec in species:
-            print (spec)
-            date_path = species_path + spec + '/'
-            dates = GetDirs(date_path)
-            for date in dates:
-                collection_path = date_path + date + '/'
-                collection = GetPics(collection_path)
-                visited = dict()
-                duplicates = []
-                for img in collection:
-                    # parse and rename image name
-                    new_name = NewName(img.split('.')[0])
-
-                    # check digits for error
-                    num = CountDigits(new_name)
-                    if num != 7:
-                        # mark as DIGERROR
-                        new_name += '_DIGERROR'
-
-                    # extract file name w/o extension
-                    ext = '.' + img.split('.')[1]
-
-                    # 'visit' the picture id and check for duplicate
-                    id = new_name.split('_')[1]
-                    if id in visited.keys():
-                        if visited[id] == 2:
-                            # new_name += '_DUPL' + ext
-                            duplicates.append(new_name + ext)
-                        else:
-                            visited[id] += 1
-                    else:
-                        visited[id] = 0
-
-                    # print("Old name: {0} New name: {1}".format(img, (new_name + ext)))
-
-                    # working_path = collection_path
-                    # os.rename(working_path + img, working_path + (new_name + ext)) UNCOMMENT WHEN TESTING COMPLETE
-
-                    # store old vs new filename pairs
-                    old_new_names.append(tuple((img, (new_name + ext))))
-
-            # store duplicate paths somewhere
-
-    # write old vs new filename pairs to CSV file
-    WriteCSV(old_new_names)
-
-
-# Driver
 if __name__ == '__main__':
     main()
