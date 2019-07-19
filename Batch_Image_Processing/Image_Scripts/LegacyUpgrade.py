@@ -181,7 +181,7 @@ def Upgrade(parent_directory):
 
                 working_directory = parent_directory + family + '/' + genus + '/' + date + '/'
                 specimens = GetImages(working_directory)
-                visited = dict()
+                visited = []
                 for specimen in specimens:
                     is_unknown = False
                     has_digerror = False
@@ -195,12 +195,11 @@ def Upgrade(parent_directory):
                     # check for duplicates
                     if len(img_vec) > 1:
                         # check for duplicate
-                        if new_name in visited.keys():
+                        if new_name in visited:
                             is_duplicate = True
-                            visited[new_name] += 1
                             new_name += '_DUPL'
                         else:
-                            visited[new_name] = 0
+                            visited.append(new_name)
 
                         # check digits for error (requires exactly 7 digits)
                         if CountDigits(img_vec[1]) != 7:
