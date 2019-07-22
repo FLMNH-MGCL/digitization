@@ -5,6 +5,7 @@ import time
 old_new_paths = []
 duplicates = []
 unknowns = []
+digerrs = []
 valid_imgs = ['JPG', 'jpg', 'jpeg', 'JPEG', 'CR2', 'cr2']
 
 def AskUsage():
@@ -107,6 +108,8 @@ def Undo():
                 os.rename(new_path, old_path)
             for old_path,new_path in duplicates:
                 os.rename(new_path, old_path)
+            for old_path,new_path in digerrs:
+                os.rename(new_path, old_path)
 
             ret_str = "All changes undone. Original state restored."
 
@@ -167,6 +170,7 @@ def Upgrade(parent_directory):
     global old_new_paths
     global duplicates
     global unknowns
+    global digerrs
 
     print("\nProgram starting...")
     time.sleep(1)
@@ -222,6 +226,8 @@ def Upgrade(parent_directory):
                     new_path = working_directory + new_name
                     if is_unknown:
                         unknowns.append(tuple((old_path, new_path)))
+                    elif has_digerror:
+                        digerrs.append(tuple((old_path, new_path)))
                     elif is_duplicate:
                         duplicates.append(tuple((old_path, new_path)))
                     else:
