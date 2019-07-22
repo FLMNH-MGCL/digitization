@@ -239,7 +239,8 @@ if __name__ == '__main__':
 """
 KNOWN BUGS:
     (2) counted as dig error (should be fixed)
+        fixed on personal computer, not museum. cannot repeat bug as of yet for testing.
     _2 counted as dig error (should be fixed)
-    not duplicates if diff orientations ?
-    fix duplicate calc, Dorsal Dorsal Ventral not counted (example)
+    not duplicates if diff orientations ? (fixed)
+    fix duplicate calc, eg Dorsal Dorsal Ventral not counted (fixed)
 """
