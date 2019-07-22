@@ -190,23 +190,28 @@ def Upgrade(parent_directory):
                     old_name = specimen.split('.')[0]
                     new_name = GetNewName(old_name)
 
-                    img_vec = new_name.split('_')
+                    if new_name.startswith("MGCL_"):
+                        img_vec = new_name.split('_')
 
-                    # check for duplicates
-                    if len(img_vec) > 1:
-                        # check for duplicate
-                        if new_name in visited:
-                            is_duplicate = True
-                            new_name += '_DUPL'
+                        # check for duplicates
+                        if len(img_vec) > 1:
+                            # check for duplicate
+                            if new_name in visited:
+                                is_duplicate = True
+                                new_name += '_DUPL'
+                            else:
+                                visited.append(new_name)
+
+                            # check digits for error (requires exactly 7 digits)
+                            if CountDigits(img_vec[1]) != 7:
+                                print(specimen + ': File has digit error.')
+                                new_name += '_DIGERROR'
+                                has_digerror = True
+
                         else:
-                            visited.append(new_name)
-
-                        # check digits for error (requires exactly 7 digits)
-                        if CountDigits(img_vec[1]) != 7:
-                            print(specimen + ': File has digit error.')
-                            new_name += '_DIGERROR'
-                            has_digerror = True
-
+                            print(specimen + ': Unknown file formatting.')
+                            new_name += 'UNKNOWN'
+                            is_unknown = True
                     else:
                         print(specimen + ': Unknown file formatting.')
                         new_name += 'UNKNOWN'
@@ -239,7 +244,10 @@ if __name__ == '__main__':
 """
 KNOWN BUGS:
     (2) counted as dig error (should be fixed)
+        fixed on personal computer, not museum. cannot repeat bug as of yet for testing.
     _2 counted as dig error (should be fixed)
-    not duplicates if diff orientations ?
-    fix duplicate calc, Dorsal Dorsal Ventral not counted (example)
+    not duplicates if diff orientations ? (fixed)
+    fix duplicate calc, eg Dorsal Dorsal Ventral not counted (fixed)
+    MGCL- "MGCL hyphen"
+    MGCL# (no separation)
 """
