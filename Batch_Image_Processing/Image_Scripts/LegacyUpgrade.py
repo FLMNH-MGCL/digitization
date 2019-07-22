@@ -189,6 +189,7 @@ def Upgrade(parent_directory):
                     extension = '.' + specimen.split('.')[1]
                     old_name = specimen.split('.')[0]
                     new_name = GetNewName(old_name)
+                    new_name = new_name.replace("-", "_") # replace hyphens
 
                     if new_name.startswith("MGCL_"):
                         img_vec = new_name.split('_')
@@ -212,6 +213,9 @@ def Upgrade(parent_directory):
                             print(specimen + ': Unknown file formatting.')
                             new_name += 'UNKNOWN'
                             is_unknown = True
+                    # Handle forgotten underscore
+                    elif new_name.startswith("MGCL"):
+                        new_name = new_name.replace("MGCL", "MGCL_")
                     else:
                         print(specimen + ': Unknown file formatting.')
                         new_name += 'UNKNOWN'
@@ -248,6 +252,6 @@ KNOWN BUGS:
     _2 counted as dig error (should be fixed)
     not duplicates if diff orientations ? (fixed)
     fix duplicate calc, eg Dorsal Dorsal Ventral not counted (fixed)
-    MGCL- "MGCL hyphen"
-    MGCL# (no separation)
+    MGCL- "MGCL hyphen" #Replace w/ underscores
+    MGCL# (no separation)   #Replace MGCL w/ MGCL_
 """
