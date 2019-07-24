@@ -102,7 +102,6 @@ def Undo():
     ret_str = ""
     while not valid_choice:
         choice = input("Do you want to:\n [1]undo ALL changes\n [2]leave errors and duplicates renamed?\n --> ")
-        return "Undo will be functional after testing..."
         if choice == '1' or choice == 'all':
             valid_choice = True
             for old_path,new_path in old_new_paths:
@@ -236,7 +235,8 @@ def Upgrade(parent_directory):
                         duplicates.append(tuple((old_path, new_path)))
                     else:
                         old_new_paths.append(tuple((old_path, new_path)))
-                    #os.rename(old_path, new_path)
+
+                    os.rename(old_path, new_path)
                     print("\nRenaming {} as {}\n".format(old_path, new_path))
 
     print("All images handled. Please hold...\n")
