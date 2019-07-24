@@ -69,9 +69,9 @@ def GetImages(path):
 def GetNewName(old_name):
     # remove male / female distinction
     new_name = old_name
+    new_name = new_name.replace("-", "_") # replace hyphens
     if not new_name.startswith("MGCL_") and new_name.startswith("MGCL"):
         new_name = new_name.replace("MGCL", "MGCL_")
-    new_name = new_name.replace("-", "_") # replace hyphens
     new_name = new_name.replace("_M", "")
     new_name = new_name.replace("_F", "")
 
