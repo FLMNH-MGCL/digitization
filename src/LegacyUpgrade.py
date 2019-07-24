@@ -74,6 +74,7 @@ def GetNewName(old_name):
         new_name = new_name.replace("MGCL", "MGCL_")
     new_name = new_name.replace("_M", "")
     new_name = new_name.replace("_F", "")
+    # new_name = new_name.replace("_C", "_CROPPED")
 
     # sub repeating underscores with single underscore
     new_name = re.sub("\_+", "_", new_name)
