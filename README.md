@@ -1,10 +1,10 @@
 # Scripts for the FLMNH
 This repository serves as a collection of scripts developed to help improve the workflow for some of the post processesing tasks of the digitization group here at the Florida Museum of Natural History at UF (e.g. batch file renaming / transcription, batch .cr2 to jpg file conversion and image rotation, and upgrading the legacy data to conform to the current filename formatting)
 
-### Legacy_Upgrade Usage:
+### LegacyUpgrade Usage:
 ```sh
 $ cd FLMNH/src/
-$ python3 Legacy_Upgrade.py
+$ python3 LegacyUpgrade.py
 ```
 
 ### Old/Experimental Scripts:
