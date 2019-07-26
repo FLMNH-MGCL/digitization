@@ -4,16 +4,20 @@
 
 import os
 import sys
-from tkinter import *
-from tkinter import StringVar
-from tkinter import filedialog
-import tkinter.messagebox
+import time
+import datetime
+import csv
+import re
+#from tkinter import *
+#from tkinter import StringVar
+#from tkinter import filedialog
+#import tkinter.messagebox
 
-old_new_names = []
+old_new_paths = []
 
 ##############################
 # ******** GUI CODE ******** #
-
+"""
 class GUI:
     window = None
     target_dir = None
@@ -125,22 +129,81 @@ class GUI:
         quit_button.pack()
 
         return window
-
+"""
 
 #############################
 # ***** RENAMING CODE ***** #
+def WriteOut(path):
+    d = datetime.datetime.today()
+    date = str(d.year) + '_' + str(d.month) + '_' + str(d.day)
+    filename = path + 'RENAMED_SCRIPT_LOG_' + date
+
+    count = ''
+    num = 0
+    while os.path.exists(filename + count + '.csv'):
+        if num == 0:
+            filename += '_'
+        num += 1
+        count = str(num)
+
+    if num == 0:
+        filename = filename + '.csv'
+    else:
+        filename = filename + count + '.csv'
+
+    csv_file = open(filename, mode='w')
+    csv_file.write('Old Path,New Path\n')
+    for old_path,new_path in old_new_paths:
+        csv_file.write(old_path + ',' + new_path + '\n')
+
+
+def AskUsage():
+    prompt = str(
+            "\nThis program will rename the freshly scanned specimen images. This program is temporary, " \
+            "it is meant to be used until the Data Matrix Reader program is finalized. The usage for this " \
+            "is as follows:\n\nYou will be asked to enter the path to the folder that contains all of the " \
+            "specimen images to be rename. If your terminal supports it, you can simply drag and drop the " \
+            "folder into it. From here, the program will rename all images within the provided directory. " \
+            "Once it is finished, you will have an opportunity to undo the changes made, so please review " \
+            "them carefully. If you choose to not undo, and you exit / allow the program to complete, you " \
+            "will not be able to undo unless you run the separate undo program. After 5 seconds of viewing " \
+            "this prompt, you can start!"
+        )
+    wanted = input("\nDo you want to see the usage information?\n [1]yes\n [2]no\n --> ")
+    if wanted == '1' or wanted == 'y' or wanted == 'yes':
+        print(prompt)
+        time.sleep(5)
+
+def DirPrompt():
+    parent_directory = input('\nPlease input the path to the directory that contains the images: ')
+    parent_directory = parent_directory.strip()
+
+    if not parent_directory.endswith('/') or not parent_directory.endswith('\\'):
+        parent_directory += '/'
+
+    while not os.path.exists(parent_directory) or not os.path.isdir(parent_directory):
+        print("\nCould not find path in filesystem or is not a directory...")
+        parent_directory = input('\nPlease input the path to the directory that contains the images: ')
+        parent_directory = parent_directory.strip()
+
+        if not parent_directory.endswith('/') or not parent_directory.endswith('\\'):
+            parent_directory += '/'
+
+    return parent_directory
+
 
 def GetSubDirs(path):
     subdirectories = []
-    for img in os.listdir(path):
+    for img in sorted(os.listdir(path)):
         if os.path.isdir(path + img):
             subdirectories.append(img)
     return subdirectories
 
 def GetDirFiles(path):
     files = []
-    for img in os.listdir(path):
-        if not os.path.isdir(path + img):
+    valid = ['JPG', 'jpg', 'CR2', 'cr2']
+    for img in sorted(os.listdir(path)):
+        if not os.path.isdir(path + img) and img.split('.')[1] in valid:
             files.append(img)
     return files
 
@@ -151,76 +214,111 @@ def RecursiveRename(path):
     Rename(path)
 
 def Rename(path):
-    ext = ".CR2"
+    global old_new_paths
     print("\nWorking in... {}\n".format(path))
 
     for filename in GetDirFiles(path):
         print(filename)
-        if filename.split('.')[1] != ext:
-            continue
+        ext = '.' + filename.split('.')[1]
 
         # Separate ext and filename
         new_name = filename.split('.')[0]
 
         # instances of ' (2)' become _V
-        new_name = new_name.replace("(2)", "_V")
+        new_name = new_name.replace("(2)", "_V") # MGCL_ID (2).CR2 => MGCL_ID _V.CR2
 
         # Spaces replaced with '_'
-        new_name = new_name.replace(' ', '_')
+        new_name = new_name.replace(' ', '_') # MGCL_ID _V.CR2 => MGCL_ID_V.CR2
 
+        new_name = re.sub("\_+", "_", new_name)
         # If not _V nor _L nor _D, add _D 
         if (new_name.find("_V") == -1 and new_name.find("_L") == -1 and new_name.find("_D") == -1):
             new_name += "_D"
 
         if filename != new_name + ext:
             #os.rename(path + filename, path + (new_name + ext))
-            old_new_names.append(tuple((path + filename, path + (new_name + ext))))
-            print(new_name + ext)
+            old_new_paths.append(tuple((path + filename, path + (new_name + ext))))
+            print("\nRenaming {} as {}\n".format(path + filename, path + new_name + ext))
 
     print("Directory completed.")
 
 
 def Undo():
     # check if there is anything to undo
-    if len(old_new_names) == 0:
+    if len(old_new_paths) == 0:
         return 'There is nothing to undo.'
 
     return 'This function needs to be tested first'
 
     # old_new_names list of tuples must include the paths!
-    for old_name,new_name in old_new_names:
+    for old_name,new_name in old_new_paths:
         os.rename(new_name, old_name)
 
     return 'Changes have been reversed.'
 
 
-def main():
-    choice = input("\nWould you prefer to use a: \n [1]command-line interface \n [2]graphical interface \n--> ")
-    
-    if choice == '1':
-        ext = ".CR2"
-        print("\nThis program will help you rename " + ext + " files in a directory")
-        path = input("Please type the path of the directory: ")
-        if not path.endswith('/') or not path.endswith('\\'):
-            path += '/'
+def Wait(path):
+    time.sleep(5)
+    global old_new_paths
 
-        method = input("\nChoose 1 of the following: \n [1]Standard (All " + ext + " files in this directory level) \n [2]Recursive (All " + ext + " files in this directory level and every level below) \n--> ")
-        
-        if method == '1':
-            Rename(path)
+    wait = True
+    print("Program completed... Please review changes.")
 
-        elif method == '2':
-            # Recursive
-            RecursiveRename(path)
-
+    while wait == True:
+        undo = input("Do you wish to undo?\n [1]yes\n [2]no\n --> ")
+        if undo == '1' or undo == 'y' or undo =='yes':
+            print(Undo())
+            wait = False
+        elif undo == '2' or undo == 'n' or undo == 'no':
+            wait = False
         else:
-            print("Input error.")
-            sys.exit(1)
+            print('Input error. Invalid option.')
+            continue
+    
+    WriteOut(path)
+    repeat = input ("Do you want to repeat program in a new parent directory?\n [1]yes\n [2]no\n --> ")
+    if repeat == '1' or repeat == 'y' or repeat == 'yes':
+        old_new_paths.clear()
+        AskUsage()
+        Run(DirPrompt())
+    else:
+        print("Exiting...")
+        time.sleep(2)
 
-    elif choice == '2':
-        window = Tk()
-        my_gui = GUI(window)
-        my_gui.mainloop()
+
+def Run(parent_directory):
+    method = input("\nChoose 1 of the following: \n [1]Standard (All image files in this directory level) \n [2]Recursive " \
+            "(All image files in this directory level and every level below) \n--> ")
+
+    if method == '1':
+        Rename(parent_directory)
+
+    elif method == '2':
+        # Recursive
+        RecursiveRename(parent_directory)
+
+    else:
+        print("Input error.")
+        sys.exit(1)
+
+    print('All images handled...')
+    Wait(parent_directory)
+
+
+def main():
+    global old_new_paths
+
+    #choice = input("\nWould you prefer to use a: \n [1]command-line interface \n [2]graphical interface \n--> ")
+    choice = '1'
+
+    if choice == '1':
+        AskUsage()
+        Run(DirPrompt())
+
+    #elif choice == '2':
+        #window = Tk()
+        #my_gui = GUI(window)
+        #my_gui.mainloop()
 
     print("\nProgram completed.\n")
 
