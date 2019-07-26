@@ -51,8 +51,8 @@ def wls(path):
 
     for dir in dirs:
         wls(path + dir + '/')
+    csv_data.append(path + '\n')
     for file in files:
-	csv_data.append(path + dir + '/')
         csv_data.append(file + '\n')
     csv_data.append('\n')
 
