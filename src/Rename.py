@@ -224,12 +224,13 @@ def Rename(path):
         new_name = filename.split('.')[0]
 
         # instances of ' (2)' become _V
-        new_name = new_name.replace("(2)", "_V") # MGCL_ID (2).CR2 => MGCL_ID _V.CR2
+        new_name = new_name.replace("(2)", "_V") # MGCL ID (2).CR2 => MGCL ID _V.CR2
 
         # Spaces replaced with '_'
-        new_name = new_name.replace(' ', '_') # MGCL_ID _V.CR2 => MGCL_ID_V.CR2
+        new_name = new_name.replace(' ', '_') # MGCL ID _V.CR2 => MGCL_ID__V.CR2
 
-        new_name = re.sub("\_+", "_", new_name)
+        new_name = re.sub("\_+", "_", new_name) # MGCL_ID__V.CR2 => MGCL_ID_V.CR2
+
         # If not _V nor _L nor _D, add _D 
         if (new_name.find("_V") == -1 and new_name.find("_L") == -1 and new_name.find("_D") == -1):
             new_name += "_D"
