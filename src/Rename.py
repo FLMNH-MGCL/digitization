@@ -236,7 +236,7 @@ def Rename(path):
             new_name += "_D"
 
         if filename != new_name + ext:
-            #os.rename(path + filename, path + (new_name + ext))
+            os.rename(path + filename, path + (new_name + ext))
             old_new_paths.append(tuple((path + filename, path + (new_name + ext))))
             print("\nRenaming {} as {}\n".format(path + filename, path + new_name + ext))
 
@@ -248,7 +248,7 @@ def Undo():
     if len(old_new_paths) == 0:
         return 'There is nothing to undo.'
 
-    return 'This function needs to be tested first'
+    # return 'This function needs to be tested first'
 
     # old_new_names list of tuples must include the paths!
     for old_name,new_name in old_new_paths:
