@@ -1,12 +1,44 @@
 import os
 import re
 import time
+import datetime
 
 old_new_paths = []
 duplicates = []
 unknowns = []
 digerrs = []
 valid_imgs = ['JPG', 'jpg', 'jpeg', 'JPEG', 'CR2', 'cr2']
+
+def Log(path):
+    global old_new_paths
+    d = datetime.datetime.today()
+    date = str(d.year) + '_' + str(d.month) + '_' + str(d.day)
+    filename = path + 'RENAMED_SCRIPT_LOG_' + date
+
+    count = ''
+    num = 0
+    while os.path.exists(filename + count + '.csv'):
+        if num == 0:
+            filename += '_'
+        num += 1
+        count = str(num)
+
+    if num == 0:
+        filename = filename + '.csv'
+    else:
+        filename = filename + count + '.csv'
+
+    csv_file = open(filename, mode='w')
+    csv_file.write('Old Path,New Path\n')
+    for old_path,new_path in old_new_paths:
+        csv_file.write(old_path + ',' + new_path + '\n')
+    for old_path,new_path in duplicates:
+        csv_file.write(old_path + ',' + new_path + '\n')
+    for old_path,new_path in unknowns:
+        csv_file.write(old_path + ',' + new_path + '\n')
+    for old_path,new_path in digerrs:
+        csv_file.write(old_path + ',' + new_path + '\n')
+
 
 def AskUsage():
     prompt = str(
@@ -128,7 +160,7 @@ def Undo():
     return ret_str
 
 
-def Wait():
+def Wait(path):
     time.sleep(5)
 
     wait = True
@@ -148,6 +180,7 @@ def Wait():
             wait = False
         elif undo == '2' or undo == 'n' or undo == 'no':
             wait = False
+            Log(path)
         else:
             print('Input error. Invalid option.')
             continue
@@ -241,7 +274,7 @@ def Upgrade(parent_directory):
                     print("\nRenaming {} as {}\n".format(old_path, new_path))
 
     print("All images handled. Please hold...\n")
-    Wait()
+    Wait(parent_directory)
 
 
 def main():

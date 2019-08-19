@@ -133,7 +133,8 @@ class GUI:
 
 #############################
 # ***** RENAMING CODE ***** #
-def WriteOut(path):
+def Log(path):
+    global old_new_paths
     d = datetime.datetime.today()
     date = str(d.year) + '_' + str(d.month) + '_' + str(d.day)
     filename = path + 'RENAMED_SCRIPT_LOG_' + date
@@ -173,6 +174,7 @@ def AskUsage():
     if wanted == '1' or wanted == 'y' or wanted == 'yes':
         print(prompt)
         time.sleep(5)
+
 
 def DirPrompt():
     parent_directory = input('\nPlease input the path to the directory that contains the images: ')
@@ -236,7 +238,7 @@ def Rename(path):
             new_name += "_D"
 
         if filename != new_name + ext:
-            #os.rename(path + filename, path + (new_name + ext))
+            os.rename(path + filename, path + (new_name + ext))
             old_new_paths.append(tuple((path + filename, path + (new_name + ext))))
             print("\nRenaming {} as {}\n".format(path + filename, path + new_name + ext))
 
@@ -248,7 +250,7 @@ def Undo():
     if len(old_new_paths) == 0:
         return 'There is nothing to undo.'
 
-    return 'This function needs to be tested first'
+    # return 'This function needs to be tested first'
 
     # old_new_names list of tuples must include the paths!
     for old_name,new_name in old_new_paths:
@@ -271,11 +273,11 @@ def Wait(path):
             wait = False
         elif undo == '2' or undo == 'n' or undo == 'no':
             wait = False
+            Log(path)
         else:
             print('Input error. Invalid option.')
             continue
     
-    WriteOut(path)
     repeat = input ("Do you want to repeat program in a new parent directory?\n [1]yes\n [2]no\n --> ")
     if repeat == '1' or repeat == 'y' or repeat == 'yes':
         old_new_paths.clear()
