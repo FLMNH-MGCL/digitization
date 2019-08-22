@@ -3,8 +3,6 @@ import os
 import datetime
 
 csv_data = []
-valid_files = ['JPG', 'jpg', 'CR2', 'cr2', 'PNG', 'png']
-
 
 def GetFolders(path):
     dirs = []
@@ -15,10 +13,9 @@ def GetFolders(path):
 
 
 def GetFiles(path):
-    global valid_files
     files = []
     for file in sorted(os.listdir(path)):
-        if os.path.isfile(path + file) and file.split('.')[1] in valid_files:
+        if os.path.isfile(path + file) and file != '.DS_STORE':
             files.append(file)
     return files
 
