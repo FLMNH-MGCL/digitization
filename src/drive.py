@@ -36,7 +36,15 @@ def download_file(service, file_id, local_fd):
             print('Download Complete')
             return
 
-def main():
+def getPath():
+    path = input('\nPlease input the path to the directory that you want to download the images to: ')
+    path = path.strip()
+    if not path.endswith('/') or not path.endswith('\\'):
+        path += '/'
+    return path
+
+def getItems(local_path):
+
     """Shows basic usage of the Drive v3 API.
     Prints the names and ids of the first 10 files the user has access to.
     """
@@ -61,24 +69,36 @@ def main():
 
     service = build('drive', 'v3', credentials=creds)
 
-    # Call the Drive v3 API
-    results = service.files().list(
-        # access the most recent 1000 files
-        # need some way to access other files
-        pageSize=1000, fields="nextPageToken, files(id, name)").execute()
-    items = results.get('files', [])
+    query = "mimeType='application/vnd.google-apps.folder'"
+    folderID = callDriveAPI(service, local_path, query, True)
+    query = folderID
+    # callDriveAPI(service, local_path, query, False)
 
-    if not items:
-        print('No files found.')
-    else:
-        print('Files:')
+def callDriveAPI(service, local_path, query, findFolder):
+    # Call the Drive v3 API
+    page_token = None
+    while True:
+        results = service.files().list(q = query,
+                                       pageSize=1000,
+                                       fields="nextPageToken,files(id, name)",
+                                       pageToken=page_token).execute()
+        items =  results.get('files', [])
         for item in items:
-            if('.jpg' in item['name']):
+            if (findFolder) and ("Cat Photos" in item['name']):
+                print ("Found Cat Photos")
+                return item['id']
+            elif (not findFolder):
                 print(u'{0} ({1})'.format(item['name'], item['id']))
                 file_id = item['id']
-                f = open("../downloads/" + item['name'], 'wb')
+                f = open(local_path + item['name'], 'wb')
                 download_file(service, file_id, f)
+        page_token = results.get('nextPageToken', None)
+        if page_token is None:
+            return None
 
+def main():
+    path = getPath()
+    getItems(path)
 
 if __name__ == '__main__':
     main()
