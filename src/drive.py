@@ -2,12 +2,18 @@ from __future__ import print_function
 import pickle
 import io
 import os.path
+
+# if you don't have root privelages
+import sys
+# Replace the path below to wherever pip3 --user installs dependencies
+sys.path.insert(1, '/Users/michaeljoconnell/Library/Python/3.7/bin')
+
 from googleapiclient.discovery import build
 from google_auth_oauthlib.flow import InstalledAppFlow
 from google.auth.transport.requests import Request
 from googleapiclient.http import MediaIoBaseDownload
 
-from google_drive_downloader import GoogleDriveDownloader as gd
+# from google_drive_downloader import GoogleDriveDownloader as gd
 
 # If modifying these scopes, delete the file token.pickle.
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
