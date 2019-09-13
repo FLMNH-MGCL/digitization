@@ -1,7 +1,10 @@
+import sys
 import os
 import time
 import imageio
 import rawpy
+
+skipping = ["EREBIDAE_partial_rename", "SPHINGIDAE_partial_rename" ]
 
 def DirPrompt():
     parent_directory = input('\nPlease input the path to the target directory: ')
@@ -21,10 +24,11 @@ def DirPrompt():
     return parent_directory
 
 def GetDirs(path):
+    global skipping
     dirs = []
     for dir in sorted(os.listdir(path)):
         if os.path.isdir(path + dir):
-            if ("partial" in dir or "rename_all" in dir) and "EREBIDAE" not in dir and "HEDYLIDAE" not in dir:
+            if ("partial" in dir or "rename_all" in dir) and dir not in skipping:
                 dirs.append(dir)
     return dirs
 
@@ -55,7 +59,8 @@ def GetJPGS(path):
 
 
 def main():
-    path = r"M:\\NaturalHistory\\Lepidoptera\\Kawahara\\Digitization\\LepNet\\PINNED_COLLECTION\\IMAGES_UPLOADED\\IMAGES_CR2_editing_complete\\"
+    # path = r"M:\\NaturalHistory\\Lepidoptera\\Kawahara\\Digitization\\LepNet\\PINNED_COLLECTION\\IMAGES_UPLOADED\\IMAGES_CR2_editing_complete\\"
+    path = input("Input path")
     families = GetDirs(path)
     for family in families:
         genera = GetSubDirs(path + family + '/')
