@@ -30,6 +30,7 @@ def GetDirs(path):
         if os.path.isdir(path + dir):
             if ("partial" in dir or "rename_all" in dir) and dir not in skipping:
                 dirs.append(dir)
+
     return dirs
 
 
@@ -38,7 +39,11 @@ def GetSubDirs(path):
     for dir in sorted(os.listdir(path)):
         if os.path.isdir(path + dir):
             #if "partial" in dir or "rename_all" in dir:
-            dirs.append(dir)
+            whats_done = ['Actias_rename_all', 'Automeris_rename_partial', 'Coloradia_rename_all']
+            if dir in whats_done:
+                continue
+            else:
+                dirs.append(dir)
     return dirs
 
 
@@ -58,6 +63,18 @@ def GetJPGS(path):
     return jpgs
 
 
+def CheckCompleted(path):
+    imgs_all = [img for img in sorted(os.listdir(path)) if os.path.isfile(path + img)]
+    imgs_jpg = [img for img in imgs_all if img.split('.')[1] == 'jpg']
+    #print(len(imgs_jpg))
+    #print(len(imgs_all) / 2)
+    if len(imgs_all) / 2 != len(imgs_jpg):
+        return False
+    else:
+        return True
+
+
+
 def main():
     # path = r"M:\\NaturalHistory\\Lepidoptera\\Kawahara\\Digitization\\LepNet\\PINNED_COLLECTION\\IMAGES_UPLOADED\\IMAGES_CR2_editing_complete\\"
     path = input("Input path")
@@ -70,6 +87,9 @@ def main():
                 images = GetImgs(path + family + '/' + genus + '/' + date + '/')
                 current_path = path + family + '/' + genus + '/' + date + '/'
                 print("Current Path: " + current_path)
+                if CheckCompleted(current_path):
+                    print('All images converted...\n')
+                    continue
                 #old_new_paths = []
                 for image in images:
                     if "MGCL" in image:
