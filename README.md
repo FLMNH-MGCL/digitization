@@ -1,5 +1,5 @@
 # Scripts for the FLMNH
-This repository serves as a collection of scripts developed to help improve the workflow for some of the post processesing tasks of the digitization group here at the Florida Museum of Natural History at UF (e.g. batch file renaming / transcription, batch .cr2 to jpg file conversion and image rotation, and upgrading the legacy data to conform to the current filename formatting)
+This repository serves as a collection of scripts developed to help improve the workflow for some of the post processesing tasks of the digitization group here at the Florida Museum of Natural History at UF.
 
 ### Installing Dependencies without Admin Privelage:
 https://docs.google.com/document/d/1cK4l-3mDBV_ln4ZRwAdSnh5nq-eYyI0gnzdLB0itrqA/edit
@@ -35,8 +35,4 @@ $ python3 name_of_script.py
 ```
 
 ### Other Projects
-More robust projects for the museum will be separated from this script collection repository and linked here!  
-
-Below is the link to the DataMatrix-Reader, the python version is pretty much complete.
-We are waiting on dependencies to be installed on the Macs. 
 [DataMatrix-Reader](https://github.com/aaronleopold/DataMatrix-Reader)
