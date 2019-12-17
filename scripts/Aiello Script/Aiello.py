@@ -6,37 +6,6 @@ old_new_paths = []
 mgcl_nums = dict()
 destination = ''
 
-# def Log(path):
-#     global old_new_paths
-#     d = datetime.datetime.today()
-#     date = str(d.year) + '_' + str(d.month) + '_' + str(d.day)
-#     filename = path + 'RENAMED_SCRIPT_LOG_' + date
-
-#     count = ''
-#     num = 0
-#     while os.path.exists(filename + count + '.csv'):
-#         if num == 0:
-#             filename += '_'
-#         num += 1
-#         count = str(num)
-
-#     if num == 0:
-#         filename = filename + '.csv'
-#     else:
-#         filename = filename + count + '.csv'
-
-#     csv_file = open(filename, mode='w')
-#     csv_file.write('Old Path,New Path\n')
-#     for old_path,new_path in old_new_paths:
-#         csv_file.write(old_path + ',' + new_path + '\n')
-#     # for old_path,new_path in duplicates:
-#     #     csv_file.write(old_path + ',' + new_path + '\n')
-#     # for old_path,new_path in unknowns:
-#     #     csv_file.write(old_path + ',' + new_path + '\n')
-#     # for old_path,new_path in digerrs:
-#     #     csv_file.write(old_path + ',' + new_path + '\n')
-
-
 def AskUsage():
     prompt = str(
             "" \
@@ -116,12 +85,6 @@ def Undo():
             valid_choice = True
             for old_path,new_path in old_new_paths:
                 os.rename(new_path, old_path)
-            # for old_path,new_path in unknowns:
-            #     os.rename(new_path, old_path)
-            # for old_path,new_path in duplicates:
-            #     os.rename(new_path, old_path)
-            # for old_path,new_path in digerrs:
-            #     os.rename(new_path, old_path)
 
             ret_str = "All changes undone. Original state restored."
 
@@ -183,15 +146,6 @@ def HandleFind(target, found, path, item):
     print('\nCopying and moving {} as {} to {}'.format(found, new_name, destination))
     copyfile(path, destination + new_name)
 
-    # if target not in mgcl_nums.keys():
-    #     mgcl_nums[target] = 1
-    # elif mgcl_nums[target] == 1:
-    #     mgcl_nums[target] += 1
-    # elif mgcl_nums[target] == 2:
-    #     print('duplicate found')
-    #     GenerateName(found, item)
-    #     # send somewhere
-
 
 def FindItem(path, item):
     global mgcl_nums
@@ -227,14 +181,6 @@ def Run(path):
     excel_path = input('\nPlease enter the path to the properly formatted CSV file: ')
 
     data = pd.read_csv(excel_path, header=0)
-    # print(data)
-    # print(data['Genus'].tolist())
-
-    # genera = list(set(data['Genus'].tolist()))
-    # print(genera)
-    # print(len(genera))
-    # for x in range(0,len(genera)):
-    #     ScanGenus(genera[x], data)
 
     for id,item in data.iterrows():
         RecursiveFindItem(path + item['Genus'] + '/', item)
