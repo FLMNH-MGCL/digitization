@@ -1,38 +1,40 @@
 import os
 import pandas as pd
+from shutil import copyfile
 
 old_new_paths = []
 mgcl_nums = dict()
+destination = ''
 
-def Log(path):
-    global old_new_paths
-    d = datetime.datetime.today()
-    date = str(d.year) + '_' + str(d.month) + '_' + str(d.day)
-    filename = path + 'RENAMED_SCRIPT_LOG_' + date
+# def Log(path):
+#     global old_new_paths
+#     d = datetime.datetime.today()
+#     date = str(d.year) + '_' + str(d.month) + '_' + str(d.day)
+#     filename = path + 'RENAMED_SCRIPT_LOG_' + date
 
-    count = ''
-    num = 0
-    while os.path.exists(filename + count + '.csv'):
-        if num == 0:
-            filename += '_'
-        num += 1
-        count = str(num)
+#     count = ''
+#     num = 0
+#     while os.path.exists(filename + count + '.csv'):
+#         if num == 0:
+#             filename += '_'
+#         num += 1
+#         count = str(num)
 
-    if num == 0:
-        filename = filename + '.csv'
-    else:
-        filename = filename + count + '.csv'
+#     if num == 0:
+#         filename = filename + '.csv'
+#     else:
+#         filename = filename + count + '.csv'
 
-    csv_file = open(filename, mode='w')
-    csv_file.write('Old Path,New Path\n')
-    for old_path,new_path in old_new_paths:
-        csv_file.write(old_path + ',' + new_path + '\n')
-    # for old_path,new_path in duplicates:
-    #     csv_file.write(old_path + ',' + new_path + '\n')
-    # for old_path,new_path in unknowns:
-    #     csv_file.write(old_path + ',' + new_path + '\n')
-    # for old_path,new_path in digerrs:
-    #     csv_file.write(old_path + ',' + new_path + '\n')
+#     csv_file = open(filename, mode='w')
+#     csv_file.write('Old Path,New Path\n')
+#     for old_path,new_path in old_new_paths:
+#         csv_file.write(old_path + ',' + new_path + '\n')
+#     # for old_path,new_path in duplicates:
+#     #     csv_file.write(old_path + ',' + new_path + '\n')
+#     # for old_path,new_path in unknowns:
+#     #     csv_file.write(old_path + ',' + new_path + '\n')
+#     # for old_path,new_path in digerrs:
+#     #     csv_file.write(old_path + ',' + new_path + '\n')
 
 
 def AskUsage():
@@ -62,6 +64,24 @@ def DirPrompt():
             parent_directory += '/'
 
     return parent_directory
+
+
+def DestinationDirPrompt():
+    destination = input('\nPlease input the path you would like the copies to go: ')
+    destination = destination.strip()
+
+    if not destination.endswith('/') or not destination.endswith('\\'):
+        destination += '/'
+
+    while not os.path.exists(destination) or not os.path.isdir(destination):
+        print("\nCould not find path in filesystem or is not a directory...")
+        destination = input('\nPlease input the path to the directory that contains the images: ')
+        destination = destination.strip()
+
+        if not destination.endswith('/') or not destination.endswith('\\'):
+            destination += '/'
+
+    return destination
 
 
 def GetDirs(path):
@@ -130,7 +150,7 @@ def Wait(path):
             wait = False
         elif undo == '2' or undo == 'n' or undo == 'no':
             wait = False
-            Log(path)
+            # Log(path)
         else:
             print('Input error. Invalid option.')
             continue
@@ -157,9 +177,11 @@ def GenerateName(found, item):
 
 def HandleFind(target, found, path, item):
     global mgcl_nums
+    global destination
 
     new_name = GenerateName(found, item)
-    print('Copying and moving {} as {} to some new location'.format(found, new_name))
+    print('\nCopying and moving {} as {} to {}'.format(found, new_name, destination))
+    copyfile(path, destination + new_name)
 
     # if target not in mgcl_nums.keys():
     #     mgcl_nums[target] = 1
@@ -198,8 +220,13 @@ def RecursiveFindItem(path, item):
 def Run(path):
     global mgcl_nums
     global old_new_paths
+    global destination
 
-    data = pd.read_csv(path + 'brett_excel.csv', header=0)
+    destination = DestinationDirPrompt()
+
+    excel_path = input('\nPlease enter the path to the properly formatted CSV file: ')
+
+    data = pd.read_csv(excel_path, header=0)
     # print(data)
     # print(data['Genus'].tolist())
 
