@@ -41,6 +41,29 @@ def scale_prompt():
     return scale
 
 
+def rescurse_prompt():
+    recurse = input("\nChoose 1 of the following: \n [1]Standard (All image files in this directory level) \n [2]Recursive " \
+            "(All image files in this directory level and every level below) \n--> ")
+    valid = False
+        
+    if recurse in ['1', '2', '[1]', '[2]']:
+        valid = True
+
+    while not valid:
+        recurse = input("\nInvalid input. Choose 1 of the following: \n [1]Standard (All image files in this directory level) \n [2]Recursive " \
+            "(All image files in this directory level and every level below) \n--> ")
+
+    return recurse
+
+
+def get_subdirs(path):
+    subdirs = []
+    for item in sorted(os.listdir(path)):
+        if os.path.isdir(item):
+            subdirs.append(item)
+    return subdirs
+
+
 def rescale(path, name, scale):
     img = Image.open(path + name)
     width, height = img.size
@@ -54,16 +77,30 @@ def rescale(path, name, scale):
     new_image = img.resize(new_size)
     new_image.save(path + new_name, 'JPEG')
 
-    print('{}: {} by {}'.format(path, width, height))
+    print('{}: Original width and height {} by {}. New width and height {} by {}'.format(path, width, height, new_width, new_height))
+
+
+def recursive_run(path, scale):
+    for subdir in get_subdirs(path):
+        recursive_run(path + subdir + '/', scale)
+    run(path, scale)
+
+
+def run(path, scale):
+    for img in sorted(os.listdir(path)):
+        rescale(path, img, scale)
 
 
 def main():
     path = DirPrompt()
-
     scale = scale_prompt()
+    recurse = rescurse_prompt()
 
-    for img in sorted(os.listdir(path)):
-        rescale(path, img, scale)
+    if recurse:
+        recursive_run(path, scale)
+    else:
+        run(path, scale)
+
 
 
 if __name__ == '__main__':
