@@ -153,17 +153,11 @@ def FindItem(path, item):
     global mgcl_nums
     global old_new_paths
     global error_log
-    found = False
 
     target = item['cat#']
     for image in sorted(os.listdir(path)):
         if target in image:
             HandleFind(target, image, path + image, item)
-            found = True
-
-    if not found:
-        print('Could not find {}'.format(target))
-        error_log.append(item)
 
 
 def RecursiveFindItem(path, item):
