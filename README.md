@@ -10,7 +10,7 @@ Rename.py replaces the Unix commands for renaming images that have been named vi
 Rename.py is to be used as a temporary workflow optimization until the dependencies for data-matrix renaming are met, when dmtxread is installed, we will link it here and move rename to Old/Experimental scripts.
 
 ```sh
-$ cd FLMNH/scripts/
+$ cd FLMNH/scripts/Rename
 $ python3 Rename.py
 ```
 
@@ -19,7 +19,7 @@ We have ran Legacy Upgrade on server data already, if you are a current voluntee
 Legacy Upgrade is to be used to upgrade data to the new standards "MGCL__0123456__V__M" --> "MGCL_0123456_V". It also will find errors and duplicates.
 
 ```sh
-$ cd FLMNH/scripts/
+$ cd FLMNH/scripts/LegacyUpgrade
 $ python3 LegacyUpgrade.py
 ```
 
@@ -27,15 +27,26 @@ $ python3 LegacyUpgrade.py
 This script was designed for a specific task, and should only be used accordingly. It will parse out a specifically formatted excel sheet to locate file references in the museum server and copy these files to another location with a different naming scheme to be used in a particular project. 
 
 ```sh
-$ cd FLMNH/scripts/
+$ cd FLMNH/scripts/Aiello
 $ python3 Aiello.py
 ```
 
 ### Rescale Script
 This will rescale images in a given directory (and subdirectories, if required by user) by a user provided proportion. This is to aid in the upload of images, as the hi-res images previously took up a large amount of space.
 
+```sh
+$ cd FLMNH/scripts/Rescale
+$ python3 rescale.py
+```
+
+
 ### Zipper Script
-This will analyze a directory (and subdirectories, if required by user) and determine how many 1GB zip archives should be created. This is to aid in the upload of images, as well. 
+This will analyze a directory (and subdirectories, if required by user) and determine how many 1GB zip archives should be created. This is to aid in the upload of images, as well.
+
+```sh
+$ cd FLMNH/scripts/Zipper
+$ python3 zipper.py
+```
 
 
 ### Other Projects
