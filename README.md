@@ -31,6 +31,12 @@ $ cd FLMNH/scripts/
 $ python3 Aiello.py
 ```
 
+### Rescale Script
+This will rescale images in a given directory (and subdirectories, if required by user) by a user provided proportion. This is to aid in the upload of images, as the hi-res images previously took up a large amount of space.
+
+### Zipper Script
+This will analyze a directory (and subdirectories, if required by user) and determine how many 1GB zip archives should be created. This is to aid in the upload of images, as well. 
+
 
 ### Other Projects
 [DataMatrix-Reader](https://github.com/FLMNH-MGCL/DataMatrix-Reader)
