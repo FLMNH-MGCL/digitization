@@ -150,12 +150,14 @@ def HandleFind(target, found, path, item):
 def FindItem(path, item):
     global mgcl_nums
     global old_new_paths
+    global error_log
     found = False
 
     target = item['cat#']
     for image in sorted(os.listdir(path)):
         if target in image:
             HandleFind(target, image, path + image, item)
+            found = True
 
     if not found:
         print('Could not find {}'.format(target))
@@ -180,6 +182,7 @@ def Run(path):
     global mgcl_nums
     global old_new_paths
     global destination
+    global error_log
 
     destination = DestinationDirPrompt()
 
@@ -189,6 +192,9 @@ def Run(path):
 
     for id,item in data.iterrows():
         RecursiveFindItem(path + item['Genus'] + '/', item)
+
+    for error in error_log:
+        print(error)
 
 
 def main():
