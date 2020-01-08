@@ -1,10 +1,12 @@
 import os
 import pandas as pd
 from shutil import copyfile
+import time
 
 old_new_paths = []
 mgcl_nums = dict()
 destination = ''
+error_log = []
 
 def AskUsage():
     prompt = str(
@@ -106,28 +108,26 @@ def Wait(path):
     wait = True
     print("Program completed... Please review changes.")
 
-    while wait == True:
-        undo = input("Do you wish to undo?\n [1]yes\n [2]no\n --> ")
-        if undo == '1' or undo == 'y' or undo =='yes':
-            print(Undo())
-            wait = False
-        elif undo == '2' or undo == 'n' or undo == 'no':
-            wait = False
-            # Log(path)
-        else:
-            print('Input error. Invalid option.')
-            continue
+    # while wait == True:
+    #     undo = input("Do you wish to undo?\n [1]yes\n [2]no\n --> ")
+    #     if undo == '1' or undo == 'y' or undo =='yes':
+    #         print(Undo())
+    #         wait = False
+    #     elif undo == '2' or undo == 'n' or undo == 'no':
+    #         wait = False
+    #         # Log(path)
+    #     else:
+    #         print('Input error. Invalid option.')
+    #         continue
 
-    repeat = input ("Do you want to repeat program in a new parent directory?\n [1]yes\n [2]no\n --> ")
-    if repeat == '1' or repeat == 'y' or repeat == 'yes':
-        old_new_paths.clear()
-        # duplicates.clear()
-        # unknowns.clear()
-        AskUsage()
-        Run(DirPrompt())
-    else:
-        print("Exiting...")
-        time.sleep(2)
+    # repeat = input ("Do you want to repeat program in a new parent directory?\n [1]yes\n [2]no\n --> ")
+    # if repeat == '1' or repeat == 'y' or repeat == 'yes':
+    #     old_new_paths.clear()
+    #     AskUsage()
+    #     Run(DirPrompt())
+    # else:
+    #     print("Exiting...")
+    #     time.sleep(2)
 
 
 def GenerateName(found, item):
@@ -150,11 +150,16 @@ def HandleFind(target, found, path, item):
 def FindItem(path, item):
     global mgcl_nums
     global old_new_paths
+    found = False
 
     target = item['cat#']
     for image in sorted(os.listdir(path)):
         if target in image:
             HandleFind(target, image, path + image, item)
+
+    if not found:
+        print('Could not find {}'.format(target))
+        error_log.append(item)
 
 
 def RecursiveFindItem(path, item):
