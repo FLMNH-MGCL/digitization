@@ -142,6 +142,8 @@ def HandleFind(target, found, path, item):
     global mgcl_nums
     global destination
 
+    mgcl_nums[item['cat#']] = True
+
     new_name = GenerateName(found, item)
     print('\nCopying and moving {} as {} to {}'.format(found, new_name, destination))
     copyfile(path, destination + new_name)
@@ -191,12 +193,14 @@ def Run(path):
     data = pd.read_csv(excel_path, header=0)
 
     for id,item in data.iterrows():
+        mgcl_nums[item['cat#']] = False
+
+    for id,item in data.iterrows():
         RecursiveFindItem(path + item['Genus'] + '/', item)
 
-    for error in error_log:
-        print(error)
-
-
+    for mgcl_num in mgcl_nums:
+        if not mgcl_nums[mgcl_num]:
+            print('{} could not be located.'.format(mgcl_num))
 def main():
     AskUsage()
     Run(DirPrompt())
