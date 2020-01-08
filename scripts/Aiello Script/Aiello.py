@@ -201,6 +201,8 @@ def Run(path):
     for mgcl_num in mgcl_nums:
         if not mgcl_nums[mgcl_num]:
             print('{} could not be located.'.format(mgcl_num))
+
+
 def main():
     AskUsage()
     Run(DirPrompt())
