@@ -42,8 +42,11 @@ def zip(path, destination, groups):
                 f_name = f.split('\\').pop()
             # print(f_name)
             copyfile(f, destination + archive_name + '/' + f_name)
-        make_archive(base_name=destination + archive_name, format='zip', root_dir=destination + archive_name + '/')
-        rmtree(destination + archive_name + '/', ignore_errors=True)
+    
+    dirs = [f for f in os.listdir(destination) if os.path.isdir(destination + f + '/')]
+    for dir in sorted(dirs):
+        make_archive(base_name=destination + dir, format='zip', root_dir=destination + dir + '/')
+        rmtree(destination + dir + '/', ignore_errors=True)
 
 
 def get_name(path):
