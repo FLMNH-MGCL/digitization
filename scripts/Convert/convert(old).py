@@ -4,6 +4,8 @@ import time
 import imageio
 import rawpy
 
+skipping = ["EREBIDAE_partial_rename", "SPHINGIDAE_partial_rename" ]
+
 def DirPrompt():
     parent_directory = input('\nPlease input the path to the target directory: ')
     parent_directory = parent_directory.strip()
