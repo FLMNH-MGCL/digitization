@@ -45,7 +45,9 @@ def zip(path, destination, groups):
     
     dirs = [f for f in os.listdir(destination) if os.path.isdir(destination + f + '/')]
     for dir in sorted(dirs):
+        print('Current archive: {}'.format(destination + dir))
         make_archive(base_name=destination + dir, format='zip', root_dir=destination + dir + '/')
+        print('Completed. Removing temporary directory.\n')
         rmtree(destination + dir + '/', ignore_errors=True)
 
 
@@ -128,6 +130,7 @@ def group_files(path, destination):
 
 def main():
     group_files(Path(dir_prompt(False)), dir_prompt(True))
+    print('/nProgram Completed.')
 
 
 if __name__ == '__main__':

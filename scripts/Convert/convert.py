@@ -2,7 +2,7 @@ import sys
 import os
 import time
 import imageio
-import rawpy
+# import rawpy
 
 def DirPrompt():
     parent_directory = input('\nPlease input the path to the target directory: ')
@@ -21,27 +21,13 @@ def DirPrompt():
 
     return parent_directory
 
+
 def GetDirs(path):
-    global skipping
     dirs = []
     for dir in sorted(os.listdir(path)):
         if os.path.isdir(path + dir):
-            if ("partial" in dir or "rename_all" in dir) and dir not in skipping:
-                dirs.append(dir)
+            dirs.append(dir)
 
-    return dirs
-
-
-def GetSubDirs(path):
-    dirs = []
-    for dir in sorted(os.listdir(path)):
-        if os.path.isdir(path + dir):
-            #if "partial" in dir or "rename_all" in dir:
-            whats_done = ['Actias_rename_all', 'Automeris_rename_partial', 'Coloradia_rename_all']
-            if dir in whats_done:
-                continue
-            else:
-                dirs.append(dir)
     return dirs
 
 
@@ -64,41 +50,41 @@ def GetJPGS(path):
 def CheckCompleted(path):
     imgs_all = [img for img in sorted(os.listdir(path)) if os.path.isfile(path + img)]
     imgs_jpg = [img for img in imgs_all if img.split('.')[1] == 'jpg']
-    #print(len(imgs_jpg))
-    #print(len(imgs_all) / 2)
     if len(imgs_all) / 2 != len(imgs_jpg):
         return False
     else:
         return True
 
 
+def recurse(path):
+    subdirs = GetDirs(path)
+    for subdir in subdirs:
+        recurse(path + subdir + '/')
+    run(path)
+
+
+def run(path):
+    print('Currently working in {}'.format(path))
+    images = GetImgs(path)
+
+    if CheckCompleted(path):
+        print('Directory already handled... Continuing')
+        return
+
+    else:
+        for image in images:
+            if 'mgcl' in image.lower():
+                continue
+            else:
+                print('Converting {}'.format(path + image))
+                with rawpy.imread(path + image) as raw:
+                    rgb = raw.postprocess(user_wb=[1, 0.5, 1, 0])
+                    name = image.split('.')[0] + '.jpg'
+                    imageio.imsave(path + name, rgb)
+
 
 def main():
-    # path = r"M:\\NaturalHistory\\Lepidoptera\\Kawahara\\Digitization\\LepNet\\PINNED_COLLECTION\\IMAGES_UPLOADED\\IMAGES_CR2_editing_complete\\"
-    path = DirPrompt()
-    families = GetDirs(path)
-    for family in families:
-        genera = GetSubDirs(path + family + '/')
-        for genus in genera:
-            dates = GetSubDirs(path + family + '/' + genus + '/')
-            for date in dates:
-                images = GetImgs(path + family + '/' + genus + '/' + date + '/')
-                current_path = path + family + '/' + genus + '/' + date + '/'
-                print("Current Path: " + current_path)
-                if CheckCompleted(current_path):
-                    print('All images converted...\n')
-                    continue
-                #old_new_paths = []
-                for image in images:
-                    if "MGCL" in image:
-                        continue
-                    print (image)
-                    #time.sleep(4)
-                    with rawpy.imread(current_path + image) as raw:
-                        rgb = raw.postprocess(user_wb=[1, 0.5, 1, 0])
-                        name = image.split('.')[0] + '.jpg'
-                        imageio.imsave(current_path + name, rgb)
-                    #time.sleep(10)
+    recurse(DirPrompt())
 
 
 if __name__ == '__main__':
