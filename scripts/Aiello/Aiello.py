@@ -134,7 +134,7 @@ def GenerateName(found, item):
     ext = found.split('.')[1]
     viewarr = found.split('_')
     view = viewarr[len(viewarr) - 1]
-    new_name = item['Genus'] + '_' + item['species'] + '_' + item['cat#'] + '_' + item['sex'] + '_' + view
+    new_name = item['Genus'].strip() + '_' + item['species'].strip() + '_' + item['cat#'].strip() + '_' + item['sex'].strip() + '_' + view
     # print(new_name)
     return new_name
 
@@ -142,7 +142,7 @@ def HandleFind(target, found, path, item):
     global mgcl_nums
     global destination
 
-    mgcl_nums[item['cat#']] = True
+    mgcl_nums[item['cat#'].strip()] = True
 
     new_name = GenerateName(found, item)
     print('\nCopying and moving {} as {} to {}'.format(found, new_name, destination))
@@ -183,14 +183,15 @@ def Run(path):
     destination = DestinationDirPrompt()
 
     excel_path = input('\nPlease enter the path to the properly formatted CSV file: ')
+    excel_path = excel_path.strip()
 
     data = pd.read_csv(excel_path, header=0)
 
     for id,item in data.iterrows():
-        mgcl_nums[item['cat#']] = False
+        mgcl_nums[item['cat#'].strip()] = False
 
     for id,item in data.iterrows():
-        RecursiveFindItem(path + item['Genus'] + '/', item)
+        RecursiveFindItem(path + item['Genus'].strip() + '/', item)
 
     for mgcl_num in mgcl_nums:
         if not mgcl_nums[mgcl_num]:
