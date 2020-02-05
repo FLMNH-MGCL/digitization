@@ -2,7 +2,7 @@ import sys
 import os
 import time
 import imageio
-# import rawpy
+import rawpy
 
 def DirPrompt():
     parent_directory = input('\nPlease input the path to the target directory: ')
