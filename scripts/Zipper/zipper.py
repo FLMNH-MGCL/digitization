@@ -63,15 +63,18 @@ def group_files(path, destination):
     global GB
 
     # get dictionary of (paths, file size) and sort in decreasing order
-    files = dict((str(f), f.stat().st_size) for f in path.glob('**/*') if f.is_file())
+    files = dict((str(f), f.stat().st_size) for f in path.glob('**/*') if f.is_file() and 'LOW-RES' in str(f))
+
+    # print(files)
+
     files = {k: v for k, v in sorted(files.items(), key=lambda item: item[1], reverse=True)}
     file_list = list(files.keys())
 
     # calculate total size of all dir
-    total_size = sum(f.stat().st_size for f in path.glob('**/*') if f.is_file())
+    total_size = sum(f.stat().st_size for f in path.glob('**/*') if f.is_file() and 'LOW-RES' in str(f))
 
     # calculate total num of files in all levels at and below dir
-    num_files = sum(f.stat().st_size * 0 + 1 for f in path.glob('**/*') if f.is_file())
+    num_files = sum(f.stat().st_size * 0 + 1 for f in path.glob('**/*') if f.is_file() and 'LOW-RES' in str(f))
 
     # calculate approx num of groups of 1GB
     num_groups = int(math.ceil(total_size / GB))
