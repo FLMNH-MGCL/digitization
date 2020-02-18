@@ -1,6 +1,7 @@
 import os
 import shutil
 from PIL import Image
+from PIL import ExifTags
 
 
 def DirPrompt():
@@ -73,6 +74,22 @@ def moveCR2(path, img):
     pass
     shutil.move(path + img, path + 'CR2/' + img)
 
+def getRotation(orientation):
+    if orientation in [1, 2]:
+        return 0
+    elif orientation in [3, 4]:
+        return 180
+    elif orientation in [5, 6]:
+        return 270
+    elif orientation in [7, 8]:
+        return 90
+    else:
+        return -1
+
+def isMirrored(orientation):
+    if orientation in [2, 7, 4, 5]:
+        return True
+    else: return False
 
 def rescale(path, name, scale):
     img = Image.open(path + name)
@@ -83,6 +100,19 @@ def rescale(path, name, scale):
     new_height = int(height / scale)
     new_size = (new_width, new_height)
     new_name = name.split('.')[0] + '_downscaled.' + ext
+
+    # grab exif data
+    try:
+        exif = dict((ExifTags.TAGS[k], v) for k, v in new_image._getexif().items() if k in ExifTags.TAGS)
+        # rotate / mirror if applicable
+        if exif['Orientation']:
+            rotation = getRotation(exif['Orientation'])
+            mirrored = isMirrored(exif['Orientation'])
+            if mirrored:
+                new_image = new_image.transpose(Image.FLIP_LEFT_RIGHT)
+            new_image = new_image.rotate(rotation, expand=True)
+    except:
+        print('no exif data could be loaded for rotation information...')
 
     new_image = img.resize(new_size)
 
