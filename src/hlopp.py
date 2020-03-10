@@ -3,6 +3,7 @@ from pathlib import Path
 import os
 import math
 from Logger import Logger
+from Helpers import Helpers
 
 
 # excel_path = input().strip()
@@ -19,41 +20,7 @@ class HloppReader:
         self.error_log = []
         self.edits = dict()
         self.logger = None
-    
-    def get_existing_path(self, path, is_dir):
-        correct_path = path
-        while not os.path.exists(correct_path) or (is_dir and not os.path.isdir(correct_path)) or (not is_dir and os.path.isdir(correct_path)):
-            print("\nCould not find path / file in filesystem (or is wrong type, i.e. requires file but provided directory)...")
-            correct_path = input('\nPlease input an appropriate path: \n --> ')
-            correct_path = correct_path.strip()
 
-            if is_dir:
-                if not correct_path.endswith('/') or not correct_path.endswith('\\'):
-                    correct_path += '/'
-            else:
-                if correct_path.endswith('/') or correct_path.endswith('\\'):
-                    correct_path = correct_path[:-1]
-        
-        return correct_path
-
-    def dir_prompt(self):
-        target_directory = input('\nPlease input the path to the directory that contains the files: \n --> ')
-        target_directory = target_directory.strip()
-
-        if not target_directory.endswith('/') or not target_directory.endswith('\\'):
-            target_directory += '/'
-
-        self.target_directory = os.path.abspath(self.get_existing_path(target_directory, True))
-    
-    def csv_prompt(self):
-        csv_path = input('\nPlease input the path to the csv file that contains the HLOPP to convert to MGCL standard: \n --> ')
-        csv_path = csv_path.strip()
-
-        if csv_path.endswith('/') or csv_path.endswith('\\'):
-            csv_path = csv_path[:-1]
-
-        self.csv_path = os.path.abspath(self.get_existing_path(csv_path, False))
-    
     def init_logger(self):
         csv_file = self.csv_path
         csv_file = self.csv_path.split('/')
@@ -70,7 +37,6 @@ class HloppReader:
             pairs.update({row['HLOPP#'] : row['MGCL_barcode']})
 
         self.hlopp_to_mgcl = pairs
-        # print(self.hlopp_to_mgcl)
     
     def isolate_filename(self, file):
         file = file.replace('\\', '/')
@@ -148,8 +114,10 @@ class HloppReader:
             os.rename(new_path, old_path)
     
     def run(self):
-        self.csv_prompt()
-        self.dir_prompt()
+        csv_prompt = '\nPlease input the path to the csv file that contains the HLOPP to convert to MGCL standard: \n --> '
+        path_prompt = '\nPlease input the path to the directory that contains the files: \n --> '
+        self.csv_path = Helpers.get_existing_path(Helpers.file_prompt(csv_prompt), False)
+        self.target_directory = Helpers.get_existing_path(Helpers.path_prompt(path_prompt), True)
         self.init_logger()
         self.parse_csv()
         self.init_convert()

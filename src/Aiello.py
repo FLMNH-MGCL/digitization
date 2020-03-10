@@ -2,15 +2,38 @@ import os
 import pandas as pd
 from shutil import copyfile
 import time
+from Logger import Logger
 
 old_new_paths = []
 mgcl_nums = dict()
 destination = ''
 error_log = []
 
+class Aiello:
+    def __init__(self):
+        self.csv_path = ""
+        self.destination = ""
+        self.target_directory = ""
+        self.error_log = []
+        self.edits = dict()
+        self.logger = None
+
+    def ask_usage(self):
+        prompt = str (
+            "stuff will be here soon" \
+            ""
+        )
+
+        wanted = input("\nDo you want to see the usage information?\n [1]yes\n [2]no\n --> ")
+        if wanted == '1' or wanted == 'y' or wanted == 'yes':
+            print(prompt)
+            time.sleep(5)
+
+
+
 def AskUsage():
     prompt = str(
-            "" \
+            "stuff will be here soon" \
             ""
         )
     wanted = input("\nDo you want to see the usage information?\n [1]yes\n [2]no\n --> ")
