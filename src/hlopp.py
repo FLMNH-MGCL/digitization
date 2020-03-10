@@ -47,6 +47,11 @@ class HloppReader:
         for file in occurrences:
             filename = self.isolate_filename(file)
             raw_filename = filename.split('.')[0]
+            position = ''
+
+            if '_' in raw_filename:
+                position = '_' + raw_filename.split('_')[1]
+                raw_filename = raw_filename.split('_')[0]
 
             ext = ''
             try:
@@ -61,7 +66,7 @@ class HloppReader:
             else:
                 # rename
                 new_path = file[:(-1 * len(filename))]
-                new_path += mgcl_rename + ext
+                new_path += mgcl_rename + position + ext
                 print('Renaming {} as {}'.format(file, new_path))
                 # os.rename(file, new_path)
                 self.edits.update({file : new_path})
