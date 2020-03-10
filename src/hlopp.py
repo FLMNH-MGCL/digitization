@@ -60,7 +60,7 @@ class HloppReader:
                 ext = ''
             
             mgcl_rename = self.hlopp_to_mgcl.get(raw_filename)
-            if mgcl_rename is None or math.isnan(mgcl_rename):
+            if mgcl_rename is None or not type(mgcl_rename) is str:
                 # log error
                 continue
             else:
