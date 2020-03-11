@@ -1,10 +1,14 @@
 import os
 import time
 
+# I chose to wrap these functions in a class so that I am not 
+# confused when I see them called in the other files 
+# (basically just me enforcing the use of visual scope)
+
 class Helpers:
     @staticmethod
     def ask_usage(prompt):
-        wanted = input("\nDo you want to see the usage information?\n [1]yes\n [2]no\n --> ")
+        wanted = input("Do you want to see the usage information?\n [1]yes\n [2]no\n --> ")
         if wanted == '1' or wanted == 'y' or wanted == 'yes':
             print(prompt)
             time.sleep(5)
@@ -47,3 +51,11 @@ class Helpers:
             file_path = file_path[:-1]
         
         return file_path
+    
+    @staticmethod
+    def get_dirs(path):
+        dirs = []
+        for dir in sorted(os.listdir(path)):
+            if os.path.isdir(path + dir):
+                dirs.append(dir)
+        return dirs

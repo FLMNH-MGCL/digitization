@@ -7,6 +7,13 @@ import math
 
 GB = 1073741824
 
+class Zipper:
+    def __init__(self):
+        pass
+
+    def run(self):
+        pass
+
 def dir_prompt(destination):
     parent_directory = ''
     if not destination:

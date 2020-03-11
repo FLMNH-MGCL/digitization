@@ -3,6 +3,13 @@ import re
 import time
 import datetime
 
+class LegacyUpgrader:
+    def __init__(self):
+        pass
+
+    def run(self):
+        pass
+
 old_new_paths = []
 duplicates = []
 unknowns = []

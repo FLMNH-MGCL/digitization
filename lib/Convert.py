@@ -4,6 +4,21 @@ import time
 import imageio
 import rawpy
 
+class Converter:
+    def __init__(self):
+        pass
+
+    def run(self):
+        # define prompts
+
+        # start recurse
+
+        # get images in path
+
+        # check handled paths
+        pass
+
+
 def DirPrompt():
     parent_directory = input('\nPlease input the path to the target directory: ')
     parent_directory = parent_directory.strip()

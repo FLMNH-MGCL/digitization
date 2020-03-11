@@ -2,16 +2,9 @@ import pandas as pd
 from pathlib import Path
 import os
 import math
-from Logger import Logger
-from Helpers import Helpers
+from lib.Logger import Logger
+from lib.Helpers import Helpers
 
-
-# excel_path = input().strip()
-
-# data = pd.read_csv(excel_path, header=0)
-
-# for i in data.itertuples():
-#     print(i)
 class HloppReader:
     def __init__(self):
         self.csv_path = ""
@@ -119,19 +112,19 @@ class HloppReader:
             os.rename(new_path, old_path)
     
     def run(self):
+        help_prompt = str(
+            "\nthis will contain stuff soon"
+        )
         csv_prompt = '\nPlease input the path to the csv file that contains the HLOPP to convert to MGCL standard: \n --> '
         path_prompt = '\nPlease input the path to the directory that contains the files: \n --> '
+        print('### HLOPP PROGRAM ###\n')
+
+        Helpers.ask_usage(help_prompt)
         self.csv_path = Helpers.get_existing_path(Helpers.file_prompt(csv_prompt), False)
         self.target_directory = Helpers.get_existing_path(Helpers.path_prompt(path_prompt), True)
         self.init_logger()
         self.parse_csv()
         self.init_convert()
         self.wait()
-
-
-def main():
-    program = HloppReader()
-    program.run()
-
-if __name__ == "__main__":
-    main()
+        
+        print()

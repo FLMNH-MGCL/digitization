@@ -1,6 +1,13 @@
 import os
 import time
 
+class UndoTool:
+    def __init__(self):
+        pass
+
+    def run(self):
+        pass
+
 def AskUsage():
     prompt = str(
             "\nThis program will undo mass file rename sessions using the log files " \

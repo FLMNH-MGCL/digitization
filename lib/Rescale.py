@@ -3,6 +3,13 @@ import shutil
 from PIL import Image
 from PIL import ExifTags
 
+class Rescaler:
+    def __init__(self):
+        pass
+
+    def run(self):
+        pass
+
 
 def DirPrompt():
     parent_directory = input('\nPlease input the path to the directory that contains the images: ')

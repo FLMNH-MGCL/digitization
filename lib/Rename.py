@@ -13,6 +13,13 @@ import re
 #from tkinter import filedialog
 #import tkinter.messagebox
 
+class LegacyRenamer:
+    def __init__(self):
+        pass
+
+    def run(self):
+        pass
+
 old_new_paths = []
 
 ##############################
