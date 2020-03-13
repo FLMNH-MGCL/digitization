@@ -36,7 +36,7 @@ class Helpers:
         path = path.strip()
         path = path.replace('\\', '/')
 
-        if not path.endswith('/') or not path.endswith('\\'):
+        if not path.endswith('/'):
             path += '/'
 
         return path
@@ -51,6 +51,27 @@ class Helpers:
             file_path = file_path[:-1]
         
         return file_path
+
+    @staticmethod
+    def rescurse_prompt(prompt):
+        recurse = input(prompt)
+        valid = False
+
+        if recurse in ['1', '2', '[1]', '[2]']:
+            valid = True
+
+        while not valid:
+            recurse = input("\nInvalid input. {}".format(prompt))
+            
+            if recurse in ['1', '2', '[1]', '[2]']:
+                valid = True
+
+
+        if recurse == '1' or recurse == '[1]':
+            return False
+        
+        else: 
+            return True
     
     @staticmethod
     def get_dirs(path):
