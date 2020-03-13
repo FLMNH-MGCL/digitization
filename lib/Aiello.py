@@ -5,11 +5,6 @@ import time
 from lib.Logger import Logger
 from lib.Helpers import Helpers
 
-old_new_paths = []
-mgcl_nums = dict()
-destination = ''
-error_log = []
-
 class AielloProject:
     def __init__(self):
         self.csv_path = ""
@@ -33,7 +28,7 @@ class AielloProject:
 
         new_name = self.generate_name(found, item)
         print('\nCopying and moving {} as {} to {}'.format(found, new_name, self.destination))
-        copyfile(path, destination + new_name)
+        copyfile(path, self.destination + new_name)
 
 
     def find_item(self, path, item):
