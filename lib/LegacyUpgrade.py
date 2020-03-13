@@ -14,6 +14,7 @@ class LegacyUpgrader:
         self.valid_imgs = ['JPG', 'jpg', 'jpeg', 'JPEG', 'CR2', 'cr2']
         self.parent_directory = ""
         self.edits = dict()
+        self.logger = None
 
     def is_valid(self, extension):
         if extension in self.valid_imgs:
