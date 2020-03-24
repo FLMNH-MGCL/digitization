@@ -61,7 +61,7 @@ class HloppReader:
                 new_path = file[:(-1 * len(filename))]
                 new_path += mgcl_rename + position + ext
                 print('Renaming {} as {}'.format(file, new_path))
-                # os.rename(file, new_path)
+                os.rename(file, new_path)
                 self.edits.update({file : new_path})
 
     def init_convert(self):
