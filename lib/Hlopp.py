@@ -60,9 +60,12 @@ class HloppReader:
                 # rename
                 new_path = file[:(-1 * len(filename))]
                 new_path += mgcl_rename + position + ext
-                print('Renaming {} as {}'.format(file, new_path))
-                os.rename(file, new_path)
-                self.edits.update({file : new_path})
+                print('Attempting to rename {} as {}'.format(file, new_path))
+                if os.path.exists(file):
+                    os.rename(file, new_path)
+                    self.edits.update({file : new_path})
+                else:
+                    print('Error: {} not found in filesystem.'.format(file))
 
     def init_convert(self):
         print('Initializing the conversions...\n')
