@@ -31,13 +31,13 @@ class Rescaler:
         self.scale = scale
 
     def getRotation(self, orientation):
-        if orientation in [1, 2]:
+        if orientation is 1 or orientation is 2:
             return 0
-        elif orientation in [3, 4]:
+        elif orientation is 3 or orientation is 4:
             return 180
-        elif orientation in [5, 6]:
+        elif orientation is 5 or orientation is 6:
             return 270
-        elif orientation in [7, 8]:
+        elif orientation is 7 or orientation is 8:
             return 90
         else:
             return -1
@@ -57,20 +57,32 @@ class Rescaler:
         new_size = (new_width, new_height)
         new_name = name.split('.')[0] + '_downscaled.' + ext
 
+        raw_rotation = None
+        rotation = None
+        mirrored = None
+        new_image = img
+
         # grab exif data
         try:
             exif = dict((ExifTags.TAGS[k], v) for k, v in new_image._getexif().items() if k in ExifTags.TAGS)
             # rotate / mirror if applicable
             if exif['Orientation']:
-                rotation = getRotation(exif['Orientation'])
-                mirrored = isMirrored(exif['Orientation'])
+                raw_rotation = int(exif['Orientation'])
+                rotation = self.getRotation(raw_rotation)
+                mirrored = self.isMirrored(rotation)
                 if mirrored:
+                    print("Detected mirrored image: flipping left to right")
                     new_image = new_image.transpose(Image.FLIP_LEFT_RIGHT)
-                new_image = new_image.rotate(rotation, expand=True)
+                
         except:
-            print('no exif data could be loaded for rotation information...')
+            print('No exif data could be loaded for rotation information...')
 
-        new_image = img.resize(new_size)
+        if rotation is not None and raw_rotation is not None:
+            print("Rotating image {} degrees (raw metadata value: {})".format(rotation, raw_rotation))
+            new_image = new_image.rotate(rotation, expand=True)
+            new_size = (new_size[1], new_size[0])
+
+        new_image = new_image.resize(new_size)
 
         print('{}: Original width and height {} by {}. New width and height {} by {}'.format(path, width, height, new_width, new_height))
 
