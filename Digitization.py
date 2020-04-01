@@ -6,6 +6,7 @@ from lib.Rename import LegacyRenamer
 from lib.Rescale import Rescaler
 from lib.Undo import UndoTool
 from lib.Zipper import Zipper
+from lib.UniqueCols import UniqueExcel
 
 
 class App:
@@ -16,6 +17,7 @@ class App:
         self.legacy_upgrader = LegacyUpgrader()
         self.renamer = LegacyRenamer()
         self.rescaler = Rescaler()
+        self.uniquer = UniqueExcel()
         self.undo_tool = UndoTool()
         self.zipper = Zipper()
     
@@ -37,6 +39,8 @@ class App:
             self.renamer.run()
         elif selection == "rescale":
             self.rescaler.run()
+        elif selection == "uniquer":
+            self.uniquer.run()
         elif selection == "zipper":
             self.zipper.run()
         elif selection == "undo":
@@ -62,9 +66,11 @@ class App:
             return "rename"
         elif selection.lower() in ['7', 'rescale']:
             return "rescale"
-        elif selection.lower() in ['8', 'zipper']:
+        elif selection.lower() in ['8', 'uniquer']:
+            return "uniquer"
+        elif selection.lower() in ['9', 'zipper']:
             return "zipper"
-        elif selection.lower() in ['9', 'undo']:
+        elif selection.lower() in ['10', 'undo']:
             return "undo"
         elif selection.lower() == 'exit':
             return "exit"
@@ -81,8 +87,9 @@ class App:
             "[5] Legacy Upgrade Project\n" \
             "[6] Rename Project (Legacy)\n" \
             "[7] Rescale JPGs (Downscaler)\n" \
-            "[8] Zipper Tool\n" \
-            "[9] Undo Tool\n\n" \
+            "[8] Unique Value Tool (Database CSV)\n" \
+            "[9] Zipper Tool\n" \
+            "[10] Undo Tool\n\n" \
             "or 'exit' to quit.\n\n--> " \
         )
 
