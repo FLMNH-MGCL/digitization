@@ -31,13 +31,13 @@ class Rescaler:
         self.scale = scale
 
     def getRotation(self, orientation):
-        if orientation is 1 or orientation is 2:
+        if orientation == 1 or orientation == 2:
             return 0
-        elif orientation is 3 or orientation is 4:
+        elif orientation == 3 or orientation == 4:
             return 180
-        elif orientation is 5 or orientation is 6:
+        elif orientation == 5 or orientation == 6:
             return 270
-        elif orientation is 7 or orientation is 8:
+        elif orientation == 7 or orientation == 8:
             return 90
         else:
             return -1
