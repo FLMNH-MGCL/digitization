@@ -7,12 +7,17 @@ import math
 from lib.Logger import Logger
 from lib.Helpers import Helpers
 
-GB = 1073741824
+# BYTES TO SIZE OF UNIT IN GB
+BYTE = 1
+KB = 1024 * BYTE
+MB = 1048576 * BYTE
+GB = 1073741824 * BYTE
 
 class Zipper:
     def __init__(self):
         self.parent_directory = ""
         self.destination = ""
+        self.archive_size = 1073741824
         self.logger = None
 
     def get_name(self, path):
@@ -21,6 +26,55 @@ class Zipper:
             i += 1
         
         return 'archive_' + str(i)
+    
+    def get_bytes(self, amt, unit):
+        if unit == "GB":
+            return amt * GB
+        elif unit == "MB":
+            return amt * MB
+        else:
+            return amt * KB
+
+    def archive_prompt(self):
+        valid_unit = False
+        unit = ""
+        while not valid_unit:
+            unit = input("\nPlease select unit: \n[1] GB\n[2] MB\n[3] KB\n--> ")
+            if unit.lower() in ["1", "gb"]:
+                print("GB Selected.\n")
+                unit = "GB"
+                valid_unit = True
+            elif unit.lower() in ["2", "mb"]:
+                print("MB Selected.\n")
+                unit = "MB"
+                valid_unit = True
+            elif unit.lower() in ["3", "kb"]:
+                print("KB Selected.\n")
+                unit = "KB"
+                valid_unit = True
+            else:
+                print("\nInvalid input...\n")
+        
+        valid_amt = False
+        amt = ""
+        while not valid_amt:
+            amt = input(f"Please enter size in {unit}:\n--> ")
+            try:
+                amt = int(amt)
+                print(f"\nConfiguration completed. Archives will cap at {amt} {unit}")
+                valid_amt = True
+            except ValueError:
+                try:
+                    amt = float(amt)
+                    print("\nDetected decimal value...")
+                    print(f"\nConfiguration completed. Archives will cap at {amt} {unit}")
+                    valid_amt = True
+                except ValueError:
+                    print(f"\n{amt} is invalid input...")
+        
+        self.archive_size = self.get_bytes(amt, unit)
+        print(f"Amount to cap in Bytes: {self.archive_size}")
+                
 
 
     def zip(self, path, groups):
@@ -62,7 +116,7 @@ class Zipper:
         num_files = sum(f.stat().st_size * 0 + 1 for f in path.glob('**/*') if f.is_file() and 'LOW-RES' in str(f))
 
         # calculate approx num of groups of 1GB
-        num_groups = int(math.ceil(total_size / GB))
+        num_groups = int(math.ceil(total_size / self.archive_size))
 
         # calculate approx avg file size
         avg_size_file = total_size / num_files
@@ -77,37 +131,39 @@ class Zipper:
         print('Approximate number of groups: {}'.format(num_groups))
         print('Approximate number of files per group: {}\n'.format(file_per_group))
 
-        # if num_groups == 1:
-        #     # no need to sort for one group
-        #     # zip_single(path)
-        #     os.chdir(path)
-        #     name = get_name(destination)
-        #     shutil.make_archive(base_name=destination + name, format='zip', root_dir=path)
-        #     return
+        if total_size / num_files > self.archive_size:
+            print("Cannot parse files into archive size specified...")
+            print("Hint: total size of files divided by number of files is greater " \
+                "than the archive size, and therefore cannot be achieved. Select a larger archive size or " \
+                "make large files smaller.")
+            return
 
+        # loop through files
+        # if file fits cap, add it, else add current group to groups and move on
         groups = []
-        for x in range(0, num_groups):
-            current_group = []
-            remaining_space = GB
-            while len(file_list) > 0 and remaining_space > files[file_list[0]]:
-                current_group.append(file_list[0])
-                # print(len(current_group))
-                remaining_space = remaining_space - files[file_list[0]]
-                file_list.pop(0)
-            
-            for i,f in enumerate(file_list):
-                if files[f] == remaining_space:
-                    current_group.append(file_list[i])
-                    remaining_space = 0
-                    file_list.pop(i)
-                    break
-                elif files[f] < remaining_space:
-                    current_group.append(file_list[i])
-                    remaining_space = remaining_space - files[f]
-                    file_list.pop(i)
-                else: continue
+        current_group = []
+        remaining_space = self.archive_size
+        for _file in files:
+            # print(_file)
+            if files[_file] < remaining_space:
+                current_group.append(_file)
+                remaining_space -= files[_file]
+            elif files[_file] == remaining_space:
+                current_group.append(_file)
+                remaining_space = self.archive_size
+                groups.append(current_group)
+                current_group = []
+            else:
+                groups.append(current_group)
+                current_group = []
+                current_group.append(_file)
+                remaining_space = self.archive_size - files[_file]
+        
+        if len(current_group) > 0:
             groups.append(current_group)
-
+        
+        print(f"Actual number of groups created: {len(groups)}\nZipping folders...\n")
+        
         self.zip(path, groups)
 
     def run(self):
@@ -122,11 +178,26 @@ class Zipper:
 
         self.parent_directory = Helpers.get_existing_path(Helpers.path_prompt(path_prompt), True)
         self.destination = Helpers.get_existing_path(Helpers.path_prompt(destination_prompt), True)
-        
+
+        # ask if want something other than a GB
+        valid = False
+
+        while not valid:
+            non_std = input("\nWould you like the default archive size (1GB cap) or something else? \n[1] or [2]\n--> ")
+            if non_std == "" or non_std == "1":
+                print("Using default configuration...")
+                valid = True
+            elif non_std == "2":
+                valid = True
+                self.archive_prompt()
+            else:
+                print("\nInvalid input...\n")
+                valid = False
+
         # run
         self.group_files(Path(self.parent_directory))
         
-        print('\nProgram complete.\n')
+        print('Program complete.\n')
 
 
     """
@@ -140,3 +211,8 @@ class Zipper:
             find the elemnet for which the difference between group size and target group size is minimal
         move this elemnt to the group
     """
+
+
+
+# C:\Users\aaron\Documents\museum\Aaron_dups_for_testing
+# C:\Users\aaron\Documents\museum\New folder
