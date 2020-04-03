@@ -107,7 +107,7 @@ class Zipper:
         # print(files)
 
         files = {k: v for k, v in sorted(files.items(), key=lambda item: item[1], reverse=True)}
-        file_list = list(files.keys())
+        # file_list = list(files.keys())
 
         # calculate total size of all dir
         total_size = sum(f.stat().st_size for f in path.glob('**/*') if f.is_file() and 'LOW-RES' in str(f))
