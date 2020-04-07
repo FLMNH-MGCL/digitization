@@ -89,14 +89,18 @@ class Zipper:
                 else:
                     f_name = f.split('\\').pop()
                 # print(f_name)
+                print(f"Copying {f} to {self.destination + archive_name + '/' + f_name}")
                 copyfile(f, self.destination + archive_name + '/' + f_name)
         
         dirs = [f for f in os.listdir(self.destination) if os.path.isdir(self.destination + f + '/')]
+        print("Zipping folders...")
         for dir in sorted(dirs):
             print('Current archive: {}'.format(self.destination + dir))
             make_archive(base_name=self.destination + dir, format='zip', root_dir=self.destination + dir + '/')
             print('Completed. Removing temporary directory.\n')
             rmtree(self.destination + dir + '/', ignore_errors=True)
+        
+        print("Finished...")
 
     def group_files(self, path):
         global GB
@@ -162,7 +166,7 @@ class Zipper:
         if len(current_group) > 0:
             groups.append(current_group)
         
-        print(f"Actual number of groups created: {len(groups)}\nZipping folders...\n")
+        print(f"Actual number of groups created: {len(groups)}\nStarting to copy files to destination folders...\n")
         
         self.zip(path, groups)
 
