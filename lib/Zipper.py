@@ -169,7 +169,14 @@ class Zipper:
     def run(self):
         print('### ZIPPER PROGRAM ###\n')
         help_prompt = str(
-            "no help yet"
+            "\nThis program was designed to work in conjunction with the downscaling program " \
+            "(which is also bundled in this Digitization.py program). It will require a search " \
+            "path (i.e. the path to the starting folder where the program will " \
+            "find all images that are products of the downscaling program), " \
+            "a destination folder (where the archives will be stored) and a " \
+            "maximum size for the archives. It is important to note, the destination " \
+            "path MUST be outside of the search path provided, otherwise the program " \
+            "will generate an endless loop as it creates new files."
         )
         Helpers.ask_usage(help_prompt)
 
