@@ -15,8 +15,8 @@ GB = 1073741824 * BYTE
 
 class Zipper:
     def __init__(self):
-        self.parent_directory = r""
-        self.destination = r""
+        self.parent_directory = ""
+        self.destination = ""
         self.archive_size = 1073741824
         self.logger = None
 
