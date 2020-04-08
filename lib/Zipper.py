@@ -58,22 +58,22 @@ class Zipper:
         valid_amt = False
         amt = ""
         while not valid_amt:
-            amt = input(f"Please enter size in {unit}:\n--> ")
+            amt = input("Please enter size in {}:\n--> ".format(unit))
             try:
                 amt = int(amt)
-                print(f"\nConfiguration completed. Archives will cap at {amt} {unit}")
+                print("\nConfiguration completed. Archives will cap at {} {}".format(amt, unit))
                 valid_amt = True
             except ValueError:
                 try:
                     amt = float(amt)
                     print("\nDetected decimal value...")
-                    print(f"\nConfiguration completed. Archives will cap at {amt} {unit}")
+                    print("\nConfiguration completed. Archives will cap at {} {}".format(amt, unit))
                     valid_amt = True
                 except ValueError:
-                    print(f"\n{amt} is invalid input...")
+                    print("\n{} is invalid input...".format(amt))
         
         self.archive_size = self.get_bytes(amt, unit)
-        print(f"Amount to cap in Bytes: {self.archive_size}")
+        print("Amount to cap in Bytes: {}".format(self.archive_size))
                 
 
 
@@ -89,7 +89,7 @@ class Zipper:
                 else:
                     f_name = f.split('\\').pop()
                 # print(f_name)
-                print(f"Copying {f} to {self.destination + archive_name + '/' + f_name}")
+                print("Copying {} to {}".format(f, self.destination + archive_name + '/' + f_name))
                 copyfile(f, self.destination + archive_name + '/' + f_name)
         
         dirs = [f for f in os.listdir(self.destination) if os.path.isdir(self.destination + f + '/')]
@@ -166,7 +166,7 @@ class Zipper:
         if len(current_group) > 0:
             groups.append(current_group)
         
-        print(f"Actual number of groups created: {len(groups)}\nStarting to copy files to destination folders...\n")
+        print("Actual number of groups created: {}\nStarting to copy files to destination folders...\n".format(len(groups)))
         
         self.zip(path, groups)
 
