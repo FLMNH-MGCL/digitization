@@ -177,7 +177,6 @@ def main():
       "Too many arguments. Please run with the help flag for more usage information:\n"
       "   wls.py --help\n"
     )
-    pass
 
   else:
     # parse argument
@@ -185,6 +184,7 @@ def main():
 
     if target_program in ["--help", "-h"]:
       help()
+      input("Press enter twice to exit...")
 
     elif target_program in ["--unique-only", "-u"]:
       program = WLS("unique")
