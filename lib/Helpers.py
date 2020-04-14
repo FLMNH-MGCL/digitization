@@ -25,8 +25,12 @@ class Helpers:
                 if not correct_path.endswith('/') or not correct_path.endswith('\\'):
                     correct_path += '/'
             else:
-                if correct_path.endswith('/') or correct_path.endswith('\\'):
+                if correct_path.endswith('/'):
                     correct_path = correct_path[:-1]
+
+                elif correct_path.endswith('\\'):
+                    correct_path = correct_path[:-2]
+
         
         return correct_path
 

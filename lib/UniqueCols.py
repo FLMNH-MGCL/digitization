@@ -14,7 +14,10 @@ class UniqueExcel:
         dest_file = open(r"{}/UNIQUE_VALUES.txt".format(self.destination),"w+")
         
         for col in self.unique_values:
-            dest_file.write("{} : {}\n\n".format(col, self.unique_values[col]))
+            dest_file.write("{} : [ ".format(col))
+            for item in self.unique_values[col]:
+                dest_file.write("{}, ".format(item))
+            dest_file.write(" ]\n\n")
         
         dest_file.close()
   
@@ -40,7 +43,7 @@ class UniqueExcel:
 
         # parse csv
         print("\nParsing CSV...\n")
-        self.raw_csv_data = pd.read_csv(self.csv_path, header=0, encoding = "ISO-8859-1")
+        self.raw_csv_data = pd.read_csv(self.csv_path, header=0, encoding = "ISO-8859-1", low_memory=False)
 
         print("Finding unique values...\n")
         for col in self.raw_csv_data:
