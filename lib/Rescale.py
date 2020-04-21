@@ -80,7 +80,11 @@ class Rescaler:
         if rotation is not None and raw_rotation is not None:
             print("Rotating image {} degrees (raw metadata value: {})".format(rotation, raw_rotation))
             new_image = new_image.rotate(rotation, expand=True)
-            new_size = (new_size[1], new_size[0])
+
+            if rotation in [90, 270]:
+                new_width = new_size[1]
+                new_height = new_size[0]
+            new_size = (new_width, new_height)
 
         new_image = new_image.resize(new_size)
 
@@ -99,6 +103,7 @@ class Rescaler:
 
     def moveCR2(self, path, img):
         shutil.move(path + img, path + 'CR2/' + img)
+        # pass
 
     def standard_run(self, path):
         print('Working in: {}'.format(path))
