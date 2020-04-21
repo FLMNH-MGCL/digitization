@@ -3,104 +3,93 @@ import os
 import time
 import imageio
 import rawpy
+from lib.Helpers import Helpers
 
 class Converter:
     def __init__(self):
-        pass
+        self.target_directory = ""
 
-    def run(self):
-        # define prompts
+    def isJPG(self, f):
+        parsedName = f.split(".")
 
-        # start recurse
+        if len(parsedName) < 2: 
+            return False
+        elif parsedName[1].lower() in ["jpg", "jpeg"]:
+            return True
+        else: return False
+    
+    def isCR2(self, f):
+        parsedName = f.split(".")
 
-        # get images in path
+        if len(parsedName) < 2: 
+            return False
+        elif parsedName[1].lower() == "cr2":
+            return True
+        else: return False
 
-        # check handled paths
-        pass
+    def getImgs(self, path):
+        jpgs = []
+        cr2s= []
+        for f in sorted(os.listdir(path)):
+            if os.path.isfile(path + f):
+                if self.isJPG(f):
+                    jpgs.append(f)
+                elif self.isCR2(f):
+                    cr2s.append(f)
+                else: continue
 
+        return (jpgs, cr2s)
 
-def DirPrompt():
-    parent_directory = input('\nPlease input the path to the target directory: ')
-    parent_directory = parent_directory.strip()
-
-    if not parent_directory.endswith('/') or not parent_directory.endswith('\\'):
-        parent_directory += '/'
-
-    while not os.path.exists(parent_directory) or not os.path.isdir(parent_directory):
-        print("\nCould not find path in filesystem or is not a directory...")
-        parent_directory = input('\nPlease input the path to the target directory that contains the folder of the folders of images: ')
-        parent_directory = parent_directory.strip()
-
-        if not parent_directory.endswith('/') or not parent_directory.endswith('\\'):
-            parent_directory += '/'
-
-    return parent_directory
-
-
-def GetDirs(path):
-    dirs = []
-    for dir in sorted(os.listdir(path)):
-        if os.path.isdir(path + dir):
-            dirs.append(dir)
-
-    return dirs
-
-
-def GetImgs(path):
-    imgs = []
-    for img in sorted(os.listdir(path)):
-        if os.path.isfile(path + img) and img.split('.')[1] == 'CR2':
-            imgs.append(img)
-    return imgs
-
-
-def GetJPGS(path):
-    jpgs = []
-    for jpg in sorted(os.listdir(path)):
-        if os.path.isfile(path + jpg) and (jpg.split('.')[1] == 'JPG' or jpg.split('.')[1] == 'jpg' or jpg.split('.')[1] == 'JPEG' or jpg.split('.')[1] == 'jpeg'):
-            jpgs.append(jpg)
-    return jpgs
-
-
-def CheckCompleted(path):
-    imgs_all = [img for img in sorted(os.listdir(path)) if os.path.isfile(path + img)]
-    imgs_jpg = [img for img in imgs_all if img.split('.')[1] == 'jpg']
-    if len(imgs_all) / 2 != len(imgs_jpg):
+    def alreadyConverted(self, path, cr2):
+        permutations = [".jpg", ".JPG", ".jpeg", ".JPEG"]
+        jpg = path + cr2.split(".")[0]
+        
+        for ext in permutations:
+            if os.path.exists(jpg + ext):
+                return True
+        
         return False
-    else:
-        return True
 
+    def standard_run(self, path):
+        print('\nCurrently working in {}'.format(path))
+        allImages = self.getImgs(path)
+        jpgs = allImages[0]
+        cr2s = allImages[1]
 
-def recurse(path):
-    subdirs = GetDirs(path)
-    for subdir in subdirs:
-        recurse(path + subdir + '/')
-    run(path)
-
-
-def run(path):
-    print('Currently working in {}'.format(path))
-    images = GetImgs(path)
-
-    if CheckCompleted(path):
-        print('Directory already handled... Continuing')
-        return
-
-    else:
-        for image in images:
-            if 'mgcl' in image.lower():
-                continue
-            else:
-                print('Converting {}'.format(path + image))
-                with rawpy.imread(path + image) as raw:
+        if len(jpgs) == len(cr2s):
+            print("Folder already handled...")
+            return
+        
+        for cr2 in cr2s:
+            if not self.alreadyConverted(path, cr2):
+                print("Converting {} to JPG format...".format(cr2))
+                with rawpy.imread(path + cr2) as raw:
                     rgb = raw.postprocess(user_wb=[1, 0.5, 1, 0])
-                    name = image.split('.')[0] + '.jpg'
+                    name = cr2.split('.')[0] + '.jpg'
                     imageio.imsave(path + name, rgb)
 
+    def recursive_run(self, path):
+        for subdir in Helpers.get_dirs(path):
+            self.recursive_run(path + subdir + "/")
+        self.standard_run(path)
 
-def main():
-    recurse(DirPrompt())
+    def run(self):
+        print("### CONVERT CR2 -> JPG PROGRAM ###\n")
+        help_prompt = str(
+            "Help to come soon..."
+        )
+        Helpers.ask_usage(help_prompt)
+        
+        path_prompt = "\nPlease input the path to the directory that contains the images:\n--> "
+        self.target_directory = Helpers.get_existing_path(Helpers.path_prompt(path_prompt), True)
 
+        recurse_prompt = str("\nChoose 1 of the following: \n [1]Standard (All files in this directory level) \n [2]Recursive " \
+            "(All files in this directory level and every level below) \n\n--> ")
+        recurse = Helpers.rescurse_prompt(recurse_prompt)
 
-if __name__ == '__main__':
-    main()
+        if recurse:
+            self.recursive_run(self.target_directory)
+        else:
+            self.standard_run(self.target_directory)
+        
+        print("\nProgram complete.\n")
