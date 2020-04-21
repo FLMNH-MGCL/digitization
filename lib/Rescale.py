@@ -30,6 +30,13 @@ class Rescaler:
 
         self.scale = scale
 
+    def getCurrentFolder(self, path):
+        if not os.path.isdir(path):
+            # error
+            pass
+        
+        return os.path.basename(os.path.dirname(path))
+
     def getRotation(self, orientation):
         if orientation == 1 or orientation == 2:
             return 0
@@ -47,7 +54,7 @@ class Rescaler:
             return True
         else: return False
 
-    def rescale(self, path, name):
+    def rescale(self, path, currentFolder, name):
         img = Image.open(path + name)
         width, height = img.size
         ext = name.split('.')[1]
@@ -94,36 +101,38 @@ class Rescaler:
         print('Moving downscaled image {} to LO-RES folder...'.format(new_name))
 
         # save downscaled to low-res folder
-        new_image.save(path + 'LOW-RES/' + new_name, 'JPEG')
+        new_image.save(path + currentFolder + '_LOW-RES/' + new_name, 'JPEG')
 
         print('Moving original {} to HI-RES folder'.format(name))
 
         # move original jpg to hi-res folder
-        shutil.move(path + name, path + 'HI-RES/' + name)
+        shutil.move(path + name, path + currentFolder + '_HI-RES/' + name)
 
-    def moveCR2(self, path, img):
-        shutil.move(path + img, path + 'CR2/' + img)
+    def moveCR2(self, path, folder, img):
+        shutil.move(path + img, path + folder + '_CR2/' + img)
         # pass
 
     def standard_run(self, path):
         print('Working in: {}'.format(path))
 
+        currentFolder = self.getCurrentFolder(path)
+
         # create the CR2, HIRES, LOWRES folders at this pathway. 
-        if not os.path.exists(os.path.join(path, 'CR2')):
-            os.mkdir(os.path.join(path, 'CR2'))
+        if not os.path.exists(os.path.join(path, currentFolder + '_CR2')):
+            os.mkdir(os.path.join(path, currentFolder + '_CR2'))
 
-        if not os.path.exists(os.path.join(path, 'HI-RES')):
-            os.mkdir(os.path.join(path, 'HI-RES'))
+        if not os.path.exists(os.path.join(path, currentFolder + '_HI-RES')):
+            os.mkdir(os.path.join(path, currentFolder + '_HI-RES'))
 
-        if not os.path.exists(os.path.join(path, 'LOW-RES')):
-            os.mkdir(os.path.join(path, 'LOW-RES'))
+        if not os.path.exists(os.path.join(path, currentFolder + '_LOW-RES')):
+            os.mkdir(os.path.join(path, currentFolder + '_LOW-RES'))
 
 
         for img in sorted(os.listdir(path)):
             if img.lower().endswith('.cr2'):
-                self.moveCR2(path, img)
+                self.moveCR2(path, currentFolder, img)
             elif img.lower().endswith('.jpg') or img.lower().endswith('.jpeg'):    
-                self.rescale(path, img)
+                self.rescale(path, currentFolder, img)
             else:
                 print('invalid file type. skipping...')
         
