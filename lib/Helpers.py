@@ -1,5 +1,6 @@
 import os
 import time
+import datetime
 
 # I chose to wrap these functions in a class so that I am not 
 # confused when I see them called in the other files 
@@ -84,3 +85,54 @@ class Helpers:
             if os.path.isdir(path + dir):
                 dirs.append(dir)
         return dirs
+
+    @staticmethod
+    def valid_images():
+        """
+            returns arr of valid image ext
+        """
+        return ["jpg", "jpeg", "cr2", "png"]
+
+    @staticmethod
+    def valid_image(img):
+        img_vec = img.split(".")
+
+        # cannot verify w/o ext
+        if len(img_vec) < 2:
+            return False
+        
+        img_ext = img_vec[1]
+        if img_ext.lower() not in ["jpg", "jpeg", "cr2", "png"]:
+            return False
+        
+        return True
+
+    @staticmethod
+    def is_int(target):
+        try: 
+            int(target)
+            return True
+        except ValueError:
+            return False
+
+    @staticmethod
+    def generate_logname(filename, ext, path):
+        d = datetime.datetime.today()
+        date = '{}_{}_{}'.format(str(d.year), str(d.month), str(d.day))
+
+        filename = '{}_{}'.format(filename, date)
+
+        count = ''
+        num = 0
+        while os.path.exists(filename + count + ext):
+            if num == 0 :
+                filename += '_'
+            num += 1
+            count = str(num)
+
+        if num == 0:
+            filename = filename + ext
+        else:
+            filename = filename + count + ext
+
+        return filename

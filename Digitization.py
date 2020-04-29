@@ -7,6 +7,7 @@ from lib.Rescale import Rescaler
 from lib.Undo import UndoTool
 from lib.Zipper import Zipper
 from lib.UniqueCols import UniqueExcel
+from lib.MGCLChecker import MGCLChecker
 
 
 class App:
@@ -20,6 +21,7 @@ class App:
         self.uniquer = UniqueExcel()
         self.undo_tool = UndoTool()
         self.zipper = Zipper()
+        self.mgclChecker = MGCLChecker()
     
     # switch
     def run_selection(self, selection):
@@ -45,6 +47,8 @@ class App:
             self.zipper.run()
         elif selection == "undo":
             self.undo_tool.run()
+        elif selection == "mgcl":
+            self.mgclChecker.run()
         else:
             pass
         
@@ -72,6 +76,8 @@ class App:
             return "zipper"
         elif selection.lower() in ['10', 'undo']:
             return "undo"
+        elif selection.lower() in ['11', 'mgcl']:
+            return "mgcl"
         elif selection.lower() == 'exit':
             return "exit"
         else:
@@ -89,7 +95,8 @@ class App:
             "[7] Rescale JPGs (Downscaler)\n" \
             "[8] Unique Value Tool (Database CSV)\n" \
             "[9] Zipper Tool\n" \
-            "[10] Undo Tool\n\n" \
+            "[10] Undo Tool\n" \
+            "[11] MGCL Checker\n\n" \
             "or 'exit' to quit.\n\n--> " \
         )
 

@@ -36,7 +36,7 @@ class UniqueExcel:
         Helpers.ask_usage(help_prompt)
 
         # get csv path
-        self.csv_path = self.target_directory = Helpers.get_existing_path(Helpers.file_prompt(csv_prompt), False)
+        self.csv_path = Helpers.get_existing_path(Helpers.file_prompt(csv_prompt), False)
 
         # get path for destination
         self.destination = Helpers.get_existing_path(Helpers.file_prompt(destination_prompt), True)
