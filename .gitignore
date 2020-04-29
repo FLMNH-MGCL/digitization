@@ -3,4 +3,5 @@
 token.pickle
 *.jpg
 *.cr2
+__pycache__
 
