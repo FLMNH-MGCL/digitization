@@ -11,6 +11,7 @@ class WLS:
     self.data = []
     self.target_directory = os.getcwd() + '/'
     self.method = method
+    self.filter = None
 
   
   def generate_log_arr(self):
@@ -158,11 +159,14 @@ def help():
     "Aaron Leopold <aaronleopold1221@gmail.com>\n"
     "Command line tools created for the FLMNH\n\n"
     "USAGE:\n"
-    "   wls.py [options]\n\n"
+    "   wls.py [option] [filter]\n\n"
     "OPTIONS:\n"
     "   -h, --help              Prints help information\n"
     "   -u, --unique-only       Run WLS only logging unique files\n"
-    "   -sv, --separate-views   Run WLS separating different specimen views into separate columns\n"
+    "   -sv, --separate-views   Run WLS separating different specimen views into separate columns\n\n"
+    "FILTER:\n"
+    "   -f, --filter            Will use filter to generate dataset\n"
+    "   example: wls.py --filter myWord\n"
   )
 
   print(help_str)
@@ -175,13 +179,6 @@ def main():
     program = WLS()
     program.run(program.target_directory)
     program.write_out()
-
-  elif len(argument_list) > 2:
-    # suggest running help command
-    print(
-      "Too many arguments. Please run with the help flag for more usage information:\n"
-      "   wls.py --help\n"
-    )
 
   else:
     # parse argument
@@ -210,3 +207,11 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+    #   elif len(argument_list) > 2:
+    # # suggest running help command
+    # print(
+    #   "Too many arguments. Please run with the help flag for more usage information:\n"
+    #   "   wls.py --help\n"
+    # )

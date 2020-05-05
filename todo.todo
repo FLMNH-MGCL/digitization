@@ -7,4 +7,4 @@ NEW SCRIPTS:
   ☐ MGCL DUPLICATE CHECK
 
 BACKLOG:
-  ☐ Fix strange error running wls with -sv (--single-view)
+  ✔ Fix strange error running wls with -sv (--single-view) @done (5/5/2020, 11:18:36 AM)
