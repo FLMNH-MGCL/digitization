@@ -5,3 +5,6 @@ ADD LOGGING TO:
 NEW SCRIPTS:
   ☐ add logging
   ☐ MGCL DUPLICATE CHECK
+
+BACKLOG:
+  ☐ Fix strange error running wls with -sv (--single-view)

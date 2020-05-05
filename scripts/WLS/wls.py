@@ -1,4 +1,4 @@
-#!/usr/local/bin/python3
+#!/usr/bin/env python
 import os
 import datetime
 import sys
@@ -28,7 +28,7 @@ class WLS:
         csv_data.append("\n")
 
     elif self.method == "views":
-      print(self.data)
+      # print(self.data)
       for _map in self.data:
         csv_data.append(_map["PATH"] + "\n") 
         for key in _map:
@@ -67,6 +67,7 @@ class WLS:
     csv_file = open(filename, mode='w')
     for data in csv_data:
         csv_file.write(data)
+    csv_file.close()
 
  
   def get_folders(self, path):
@@ -81,7 +82,8 @@ class WLS:
     global valid_files
     files = []
     for file in sorted(os.listdir(path)):
-        if os.path.isfile(path + file) and file.split('.')[1] in valid_files:
+        if os.path.isfile(path + file):
+          if (len(file.split('.')) > 1) and (file.split('.')[1] in valid_files):
             files.append(file)
     return files
 
@@ -97,17 +99,20 @@ class WLS:
     
     return new_name
 
-
+  # FIXME
   def run_views(self, path):
     files = self.get_files(path)
     dirs = self.get_folders(path)
     dir_map = dict()
+
+    print("\nCurrently working in: {}".format(path))
 
     for dir in dirs:
       self.run_views(path + dir + "/")
     dir_map["PATH"] = path
     for file in files:
       mapped_name = self.parse_name(file)
+      print("Current file: {}\nParsed name: {}".format(file, mapped_name))
       if mapped_name in dir_map:
         dir_map[mapped_name].append(file)
       else:
