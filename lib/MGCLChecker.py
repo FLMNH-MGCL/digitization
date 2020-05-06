@@ -57,7 +57,7 @@ class MGCLChecker:
       return False
 
     ext = sanity_check[1]
-    if not Helpers.valid_image(ext):
+    if not Helpers.valid_image("." + ext):
       print("{} is not a valid file type for this program".format(filename))
       return False
 
