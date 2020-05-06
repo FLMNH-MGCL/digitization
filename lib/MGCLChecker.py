@@ -24,6 +24,12 @@ class MGCLChecker:
 
     # self.error_log = []
 
+  def reset(self):
+    self.target_directory = ""
+    self.scanned = dict()
+    self.duplicates = []
+    self.edge_cases = []
+
 
   def collect_files(self):
     return list(dict((str(f), f.stat().st_size) for f in Path(self.target_directory).glob('**/*') if f.is_file()).keys())
@@ -90,7 +96,6 @@ class MGCLChecker:
       
     dest_file.close()
 
-
   def verfiy_files(self, files):
     """
       iterate through all the files, check if they exist in the 'self.scanned' dictionary.
@@ -133,5 +138,6 @@ class MGCLChecker:
     # print(files)
 
     print("\nProgram completed.\n")
+    self.reset()
 
 
