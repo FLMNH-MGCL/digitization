@@ -21,6 +21,12 @@ class Zipper:
         self.archive_size = 1073741824
         self.logger = None
 
+    def reset(self):
+        self.parent_directory = ""
+        self.destination = ""
+        self.archive_size = 1073741824
+        self.logger = None
+
     def get_name(self, path):
         i = 0
         while os.path.exists(path + 'archive_' + str(i) + '.zip') or os.path.exists(path + 'archive_' + str(i) + '/'):
@@ -215,6 +221,7 @@ class Zipper:
         self.group_files(Path(self.parent_directory))
         
         print('Program complete.\n')
+        self.reset()
 
 
     """

@@ -9,6 +9,11 @@ class Rescaler:
     def __init__(self):
         self.target_directory = ""
         self.scale = 0
+    
+    def reset(self):
+        self.target_directory = ""
+        self.scale = 0
+
 
     def scale_prompt(self):
         scale_amount = input('\nPlease input the amount to rescale the image. For example, if you want it scaled to half the size, enter \'2\'. If you wanted it a quarter of the size, enter \'4\'.\n --> ')
@@ -166,3 +171,4 @@ class Rescaler:
             self.standard_run(self.target_directory)
 
         print('\nProgram complete.\n')
+        self.reset()

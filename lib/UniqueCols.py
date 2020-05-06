@@ -9,6 +9,13 @@ class UniqueExcel:
         self.raw_csv_data = None
         self.unique_values = dict()
 
+    def reset(self):
+        self.csv_path = ""
+        self.destination = ""
+        # self.error_log = []
+        self.raw_csv_data = None
+        self.unique_values = dict()
+
     def write_out(self):
         print("Writing values to: {}/UNIQUE_VALUES.txt".format(self.destination))
         dest_file = open(r"{}/UNIQUE_VALUES.txt".format(self.destination),"w+")
@@ -54,6 +61,7 @@ class UniqueExcel:
         # print(self.unique_values)
 
         self.write_out()
+        self.reset()
 
 # testing:
 # file : C:\Users\aaron\Documents\museum\FLMNH\testing\test.csv

@@ -14,6 +14,14 @@ class HloppReader:
         self.edits = dict()
         self.logger = None
 
+    def reset(self):
+        self.csv_path = ""
+        self.target_directory = ""
+        self.hlopp_to_mgcl = dict()
+        self.error_log = []
+        self.edits = dict()
+        self.logger = None
+
     def init_logger(self):
         csv_file = self.csv_path
         csv_file = self.csv_path.split('/')
@@ -131,3 +139,4 @@ class HloppReader:
         self.wait()
         
         print()
+        self.reset()

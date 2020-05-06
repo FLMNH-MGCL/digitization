@@ -15,6 +15,15 @@ class AielloProject:
         self.mgcl_nums = dict()
         self.logger = None
 
+    def reset(self):
+        self.csv_path = ""
+        self.destination = ""
+        self.target_directory = ""
+        self.error_log = []
+        self.raw_csv_data = None
+        self.mgcl_nums = dict()
+        self.logger = None
+
     def generate_name(self, found, item):
         ext = found.split('.')[1]
         viewarr = found.split('_')
@@ -76,3 +85,4 @@ class AielloProject:
                 print('{} could not be located.'.format(mgcl_num))
 
         print()
+        self.reset()
