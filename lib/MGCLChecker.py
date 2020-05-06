@@ -35,24 +35,30 @@ class MGCLChecker:
 
     # doesn't contain extension?
     if len(sanity_check) < 2:
+      print("{} failed sanity check (no file extension found)".format(filename))
       return False
       
     # missing _
     if len(name_vec) < 2:
+      print("{} missing underscore".format(filename))
       return False
 
     if name_vec[0] != "MGCL":
+      print("{} does not start with MGCL".format(filename))
       return False
 
     mgcl_num = name_vec[1].split(".")[0]
     if len(mgcl_num) < 6:
+      print("{}: {} is too small of a number".format(filename, mgcl_num))
       return False
 
     if not Helpers.is_int(mgcl_num):
+      print("{}: detected non-integer value for number in filename".format(filename))
       return False
 
-    ext = name_vec[1].split(".")[1]
+    ext = sanity_check[1]
     if not Helpers.valid_image(ext):
+      print("{} is not a valid file type for this program".format(filename))
       return False
 
     return True
