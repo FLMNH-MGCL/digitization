@@ -1,10 +1,4 @@
-ADD LOGGING TO:
-  ☐ downscaler.py
-  ☐ zipper
-
-NEW SCRIPTS:
-  ☐ add logging
-  ☐ MGCL DUPLICATE CHECK
-
-BACKLOG:
-  ✔ Fix strange error running wls with -sv (--single-view) @done (5/5/2020, 11:18:36 AM)
+Overall Todo:
+  ☐ add logging to scripts that alter fs
+  ☐ alter mgcl checker to exclude .ds_store and thumbs.db 
+  ☐ add relocate to column to mgcl checker log file to be used in new script

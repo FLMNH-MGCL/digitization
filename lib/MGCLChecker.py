@@ -32,7 +32,7 @@ class MGCLChecker:
 
 
   def collect_files(self):
-    return list(dict((str(f), f.stat().st_size) for f in Path(self.target_directory).glob('**/*') if f.is_file()).keys())
+    return list(dict((str(f), f.stat().st_size) for f in Path(self.target_directory).glob('**/*') if (f.is_file() and Helpers.valid_image(str(f)))).keys())
 
 
   def is_valid(self, filename):
@@ -101,6 +101,8 @@ class MGCLChecker:
       iterate through all the files, check if they exist in the 'self.scanned' dictionary.
       if they do, add to duplicates. Add unhandled edge cases to 'self.edge_cases'
     """
+    # print(files)
+    # return
     print("\nFiles collected... Analyzing...\n")
     for filepath in files:
       # print(filepath)
