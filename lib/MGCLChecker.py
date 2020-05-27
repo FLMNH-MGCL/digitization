@@ -35,14 +35,23 @@ class MGCLChecker:
     return list(dict((str(f), f.stat().st_size) for f in Path(self.target_directory).glob('**/*') if (f.is_file() and Helpers.valid_image(str(f)))).keys())
 
 
-  def is_valid(self, filename):
+  def is_img(self, filename):
     sanity_check = filename.split(".")
-    name_vec = filename.split("_")
 
-    # doesn't contain extension?
     if len(sanity_check) < 2:
       print("{} failed sanity check (no file extension found)".format(filename))
       return False
+
+    ext = sanity_check[1]
+    if not Helpers.valid_image("." + ext):
+      print("{} is not a valid file type for this program".format(filename))
+      return False
+
+    return True
+
+
+  def is_valid(self, filename):
+    name_vec = filename.split("_")
       
     # missing _
     if len(name_vec) < 2:
@@ -60,11 +69,6 @@ class MGCLChecker:
 
     if not Helpers.is_int(mgcl_num):
       print("{}: detected non-integer value for number in filename".format(filename))
-      return False
-
-    ext = sanity_check[1]
-    if not Helpers.valid_image("." + ext):
-      print("{} is not a valid file type for this program".format(filename))
       return False
 
     return True
@@ -108,6 +112,9 @@ class MGCLChecker:
       # print(filepath)
       filename = os.path.basename(filepath)
       valid = True
+
+      if not self.is_img(filename):
+        continue
 
       if not self.is_valid(filename):
         valid = False
