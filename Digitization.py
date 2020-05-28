@@ -8,6 +8,7 @@ from lib.Undo import UndoTool
 from lib.Zipper import Zipper
 from lib.UniqueCols import UniqueExcel
 from lib.MGCLChecker import MGCLChecker
+from lib.BatchMover import BatchMover
 
 
 class App:
@@ -22,6 +23,7 @@ class App:
         self.undo_tool = UndoTool()
         self.zipper = Zipper()
         self.mgclChecker = MGCLChecker()
+        self.batchMover = BatchMover()
     
     # switch
     def run_selection(self, selection):
@@ -49,6 +51,8 @@ class App:
             self.undo_tool.run()
         elif selection == "mgcl":
             self.mgclChecker.run()
+        elif selection == "mover":
+            self.batchMover.run()
         else:
             pass
         
@@ -78,6 +82,8 @@ class App:
             return "undo"
         elif selection.lower() in ['11', 'mgcl']:
             return "mgcl"
+        elif selection.lower() in ['12', 'mover']:
+            return "mover"
         elif selection.lower() == 'exit':
             return "exit"
         else:
@@ -96,7 +102,8 @@ class App:
             "[8] Unique Value Tool (Database CSV)\n" \
             "[9] Zipper Tool\n" \
             "[10] Undo Tool\n" \
-            "[11] MGCL Checker\n\n" \
+            "[11] MGCL Checker\n" \
+            "[12] Batch Mover\n\n" \
             "or 'exit' to quit.\n\n--> " \
         )
 
