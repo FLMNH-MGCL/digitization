@@ -11,8 +11,6 @@ class BatchMover:
     
     def reset(self):
         self.csv_path = ""
-        self.destination = ""
-        self.starting_folder = ""
         self.error_log = []
         self.raw_csv_data = None
 

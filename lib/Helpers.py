@@ -81,10 +81,14 @@ class Helpers:
     @staticmethod
     def get_dirs(path):
         dirs = []
-        for dir in sorted(os.listdir(path)):
-            if os.path.isdir(path + dir):
-                dirs.append(dir)
-        return dirs
+        try:
+            for dir in sorted(os.listdir(path)):
+                if os.path.isdir(path + dir):
+                    dirs.append(dir)
+            return dirs
+        except:
+            print("Error: recieved invalid path\n-->", path)
+            return []
 
     @staticmethod
     def valid_images():

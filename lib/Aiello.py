@@ -36,15 +36,22 @@ class AielloProject:
         self.mgcl_nums[item['cat#'].strip()] = True
 
         new_name = self.generate_name(found, item)
-        print('\nCopying and moving {} as {} to {}'.format(found, new_name, self.destination))
-        copyfile(path, self.destination + new_name)
+
+        if os.path.exists(self.destination + new_name):
+            print("\nFile already exists in destination (skipping copy)")
+        else:
+            print('\nCopying and moving {} as {} to {}'.format(found, new_name, self.destination))
+            copyfile(path, self.destination + new_name)
 
 
     def find_item(self, path, item):
         target = item['cat#']
-        for image in sorted(os.listdir(path)):
-            if target in image:
-                self.handle_find(target, image, path + image, item)
+        if os.path.exists(path):
+            for image in sorted(os.listdir(path)):
+                if target in image:
+                    self.handle_find(target, image, path + image, item)
+        else:
+            print("Error: path is not in filesystem (skipping entry)...\nInvalid path --> {}".format(path))
 
     def recursive_find_item(self, path, item):
         subdirs = Helpers.get_dirs(path)
@@ -53,6 +60,7 @@ class AielloProject:
         self.find_item(path, item)
 
     def run(self):
+
         # define prompts
         target_prompt = "\nPlease input the path to the directory that contains the images: \n--> "
         destination_prompt = "\nPlease input the path you would like the copies to go: \n--> "
@@ -61,16 +69,24 @@ class AielloProject:
         print("### AIELLO PROGRAM ###")
 
         # get path for files
-        self.target_directory = Helpers.get_existing_path(Helpers.file_prompt(target_prompt), True)
+        self.target_directory = Helpers.get_existing_path(Helpers.path_prompt(target_prompt), True)
+        # print("Obtained target directory: {}".format(self.target_directory))
 
         # get path for destination
-        self.destination = Helpers.get_existing_path(Helpers.file_prompt(destination_prompt), True)
+        self.destination = Helpers.get_existing_path(Helpers.path_prompt(destination_prompt), True)
+        # print("Obtained destination directory: {}".format(self.destination))
+
 
         # get csv path
-        self.csv_path = self.target_directory = Helpers.get_existing_path(Helpers.file_prompt(csv_prompt), False)
+        self.csv_path = Helpers.get_existing_path(Helpers.file_prompt(csv_prompt), False)
+        # print("Obtained csv file: {}".format(self.csv_path))
+
 
         # parse csv
         self.raw_csv_data = pd.read_csv(self.csv_path, header=0)
+        # print(self.raw_csv_data)
+
+        
 
         # initialize the dict
         for id,item in self.raw_csv_data.iterrows():
