@@ -2,3 +2,4 @@ Overall Todo:
   ☐ add logging to scripts that alter fs
   ☐ alter mgcl checker to exclude .ds_store and thumbs.db 
   ☐ add relocate to column to mgcl checker log file to be used in new script
+  ☐ add ignore case for mgclchecker on folders with "duplicate" in the name

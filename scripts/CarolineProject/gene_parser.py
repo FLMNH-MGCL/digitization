@@ -19,16 +19,45 @@ except ImportError:
         finally:
             termios.tcsetattr(fd, termios.TCSADRAIN, old)
 
+class Gene:
+    def __init__(self, sseqid, gene, species, version=None):
+        self.sseqid = sseqid
+        self.gene = gene
+        self.version = version
+        self.species = species
+
 
 class GeneParser:
     valid_gene_files = ["fa", "fasta"]
     valid_csv_files = "csv"
 
-    def __init__(self, gene_file="", csv_file=""):
+    def __init__(self, gene_file="", csv_file=None, excel_file=None):
         self.gene_file = gene_file
-        self.csv_file = csv_file
-        self.raw_csv_data = None
+
+        if csv_file is None and excel_file is None:
+            self.document = None
+        elif csv_file is None and excel_file is not None:
+            self.document = excel_file
+            self.type = "excel"
+        else:
+            self.document = csv_file
+            self.type = "csv"
+
+        self.raw_data = None
         self.genes = []
+
+    @staticmethod
+    def check_valid_sources(filepath, ext):
+        file_vec = os.path.basename(filepath).split(".")
+        if len(file_vec) < 2:
+            return False
+        
+        passed_ext = file_vec[1]
+
+        if ext != passed_ext.lower():
+            return False
+
+        return True
 
     @staticmethod
     def help():
@@ -96,6 +125,7 @@ class GeneParser:
                 files.append(f)
         return files
 
+    # TODO: add options to select csv or excel
     def collect_input(self):
         self.csv_file = GeneParser.get_existing_path(GeneParser.path_prompt("Please enter path to the csv file: \n--> ", False), False)
         self.gene_file = GeneParser.get_existing_path(GeneParser.path_prompt("Please enter path to the fa/fasta file: \n--> ", False), False)
@@ -108,6 +138,7 @@ class GeneParser:
         
         gene_header = gene_header.replace('>', '')
         header_comma = gene_header.split(',')
+        genes = None
 
         try:
             # gene has version information
@@ -121,7 +152,10 @@ class GeneParser:
                 version = header_second.split('[')[0].strip()
                 associated_species = header_second.split('[')[1].replace(']', '')
 
-                print("acc_num:", acc_num, "\ngname:", gname, "\nversion", version, "\nspecies", associated_species, "\n")
+                # print("acc_num:", acc_num, "\ngname:", gname, "\nversion", version, "\nspecies", associated_species, "\n")
+
+                gene = Gene(acc_num, gname, associated_species, version)
+                return gene
             
             elif len(header_comma) == 1:
                 header_brackets = gene_header.split('[')
@@ -131,14 +165,23 @@ class GeneParser:
                 acc_num = header_first.split(' ')[0]
                 gname = header_first.split(' ')[1].strip()
 
-                print("acc_num:", acc_num, "\ngname:", gname, "\nspecies", associated_species, "\n")
+                # print("acc_num:", acc_num, "\ngname:", gname, "\nspecies", associated_species, "\n")
+
+                gene = Gene(acc_num, gname, associated_species)
+                return gene
+                # genes.append(gene)
             else:
-                print("Error: Unregocnized gene format!")
+                print("Error: Unregocnized gene format!\n")
+                # TODO: extract acc_num
+                # dump to a col in csv saying sm about invalid format
                 print(gene_header)
+                return None
         except:
             print("Uh oh... Something went wrong!")
             print(gene_header)
             sys.exit()
+
+        return genes
 
     
     def collect_gene_data(self):
@@ -151,53 +194,84 @@ class GeneParser:
 
                 gene_line = f.readline()
 
-                gene = tuple((header_line.strip(), gene_line.strip()))
-                GeneParser.parse_gene_header(header_line.strip())
+                # gene = tuple((header_line.strip(), gene_line.strip()))
+                gene = GeneParser.parse_gene_header(header_line.strip())
                 self.genes.append(gene)
 
 
 
     def run(self):
-        self.raw_csv_data = pd.read_csv(self.csv_file)
+        self.raw_data = None
+        
+        if self.type == "csv":
+            self.raw_data = pd.read_csv(self.document)
+        else:
+            self.raw_data = pd.read_excel(self.document)
         # print(self.raw_csv_data)
+
+        # df['sgi'].values[:] = ""
 
         self.collect_gene_data()
         print()
-        print(self.genes[0])
+        # print(self.genes[0])
 
-        return
+        for gene in self.genes:
+            if gene is None:
+                continue
+            sseqid = gene.sseqid
 
-        # loop through every row in csv
-        for row in self.raw_csv_data.iterrows():
-            index = row[0]
-            row = row[1]
-            print(row)
+            print(sseqid)
 
-            qseqid = row['qseqid']
-            gene = row['gene']
+            # df.index[df['BoolCol']].tolist()
+
+            instances = self.raw_data[self.raw_data['sseqid'] == sseqid].index.tolist()
+            # print(instances)
+            for instance in instances:
+                print(instance)
 
             break
+
+
 
 
 def main():
     my_parser = argparse.ArgumentParser(description="Parse fa and fasta files to extract the accession number and gene name for each")
     my_parser.add_argument('--gene-file', required=False, type=str, help="path to the fa/fasta file", default=None)
     my_parser.add_argument('--csv-file', required=False,type=str, help="path to the csv file", default=None)
+    my_parser.add_argument('--excel-file', required=False,type=str, help="path to the excel file", default=None)
     args = my_parser.parse_args()
 
-    gene_file=args.gene_file
+    gene_file = args.gene_file
     csv_file = args.csv_file
+    excel_file = args.excel_file
 
-    if gene_file is None or csv_file is None:
+    if gene_file is None or (csv_file is None and excel_file is None):
         # default to program collecting input
         parser = GeneParser()
         parser.collect_input()
         parser.run()
-    else:
+    elif excel_file is not None and csv_file is not None:
+        print("\nError. You input two source files of two different types. \nPlease select one and rerun the program with the single selection only.\n")
+    elif csv_file is not None:
+        GeneParser.check_valid_sources(csv_file, "csv")
         parser = GeneParser(gene_file=gene_file, csv_file=csv_file)
         parser.run()
+    elif excel_file is not None:
+        GeneParser.check_valid_sources(excel_file, "xlsx")
+        parser = GeneParser(gene_file=gene_file, csv_file=csv_file)
+        parser.run()
+    else:
+        print("\nError. Invalid startup configuration, exiting program. Please run with the help flag to review usage.\n")
 
     # print(gene_file, csv_file)
 
 if __name__ == "__main__":
     main()
+
+"""
+TESTING SHELL SCRIPTS
+
+python3 gene_parser.py --gene-file /Users/aaronleopold/Documents/museum/gene/AllDrosHearingGenes_AA.fa --csv-file /Users/aaronleopold/Documents/museum/gene/DrosHearingGenes_AA_blastp_DmOnly_SANDBOX/blastp.csv
+
+python3 gene_parser.py --gene-file /Users/aaronleopold/Documents/museum/gene/AllDrosHearingGenes_AA.fa --csv-file /Users/aaronleopold/Documents/museum/gene/DrosHearingGenes_AA_blastp_DmOnly_SANDBOX/blastp.csv --excel-file TEST
+"""

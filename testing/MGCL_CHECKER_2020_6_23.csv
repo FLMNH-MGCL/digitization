@@ -1,0 +1,8 @@
+path to file,has duplicate,is valid
+/Users/aaronleopold/Documents/museum/flmnh/testing/test.jpg,True,False
+/Users/aaronleopold/Documents/museum/flmnh/testing/test1/test.jpg,True,False
+/Users/aaronleopold/Documents/museum/flmnh/testing/test3/test.jpg,True,False
+/Users/aaronleopold/Documents/museum/flmnh/testing/test2/test.jpg,True,False
+/Users/aaronleopold/Documents/museum/flmnh/testing/test1/downscale.jpg,False,False
+/Users/aaronleopold/Documents/museum/flmnh/testing/BatchMover/test1/test1.jpg,False,False
+/Users/aaronleopold/Documents/museum/flmnh/testing/BatchMover/test2/test2.jpg,False,False

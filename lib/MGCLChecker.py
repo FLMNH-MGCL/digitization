@@ -32,7 +32,7 @@ class MGCLChecker:
 
 
   def collect_files(self):
-    return list(dict((str(f), f.stat().st_size) for f in Path(self.target_directory).glob('**/*') if (f.is_file() and Helpers.valid_image(str(f)))).keys())
+    return list(dict((str(f), f.stat().st_size) for f in Path(self.target_directory).glob('**/*') if (f.is_file() and "duplicate" not in str(f) and Helpers.valid_image(str(f)))).keys())
 
 
   def is_img(self, filename):
