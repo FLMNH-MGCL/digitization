@@ -171,10 +171,10 @@ class GeneParser:
                 return gene
                 # genes.append(gene)
             else:
-                print("Error: Unregocnized gene format!\n")
+                print("Error: Unregocnized gene format!")
                 # TODO: extract acc_num
                 # dump to a col in csv saying sm about invalid format
-                print(gene_header)
+                print(gene_header , "\n")
                 return None
         except:
             print("Uh oh... Something went wrong!")
@@ -185,6 +185,7 @@ class GeneParser:
 
     
     def collect_gene_data(self):
+        print("Extracting gene data from .fa/.fasta file...\n")
         with open(self.gene_file, "r") as f:
             while True:
                 header_line = f.readline()
@@ -199,6 +200,45 @@ class GeneParser:
                 self.genes.append(gene)
 
 
+    def insert_new_col(self):
+        print("Creating two new columns if they do not already exist...")
+        columns = self.raw_data.columns
+        if 'gname' in columns and 'version' in columns:
+            return
+        
+        if 'gname' not in columns:
+            # get index of sseqid
+            left_index = columns.get_loc("sseqid")
+            self.raw_data.insert(left_index + 1, 'gname', ['' for i in range(self.raw_data.shape[0])])
+            columns = self.raw_data.columns
+            print("created 'gname'...")
+        
+        if 'version' not in columns:
+            # get index of gname
+            left_index = columns.get_loc("gname")
+            self.raw_data.insert(left_index + 1, 'version', ['' for i in range(self.raw_data.shape[0])])
+            print("created 'version'...")
+        
+        print()
+
+    
+    def find_and_insert(self, gene):
+        sseqid = gene.sseqid
+
+        instances = self.raw_data[self.raw_data['sseqid'] == sseqid].index.tolist()
+        
+        if len(instances) == 0:
+            print("No matches found for {}...".format(sseqid))
+            return
+        else:
+            print("{} matches found for {}, inserting now...".format(len(instances), sseqid))
+
+        for instance in instances:
+            self.raw_data.at[instance, 'gname'] = gene.gene
+
+            if gene.version is not None:
+                self.raw_data.at[instance, 'version'] = gene.version
+
 
     def run(self):
         self.raw_data = None
@@ -207,29 +247,17 @@ class GeneParser:
             self.raw_data = pd.read_csv(self.document)
         else:
             self.raw_data = pd.read_excel(self.document)
-        # print(self.raw_csv_data)
-
-        # df['sgi'].values[:] = ""
 
         self.collect_gene_data()
-        print()
-        # print(self.genes[0])
+        self.insert_new_col()
+        print("Finding matches and inserting into csv...\n")
 
         for gene in self.genes:
             if gene is None:
                 continue
-            sseqid = gene.sseqid
-
-            print(sseqid)
-
-            # df.index[df['BoolCol']].tolist()
-
-            instances = self.raw_data[self.raw_data['sseqid'] == sseqid].index.tolist()
-            # print(instances)
-            for instance in instances:
-                print(instance)
-
-            break
+            self.find_and_insert(gene)
+        
+        self.raw_data.to_csv("test.csv")
 
 
 
