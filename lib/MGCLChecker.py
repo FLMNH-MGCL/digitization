@@ -75,7 +75,6 @@ class MGCLChecker:
 
 
   def write_out(self):
-    # csv => filepath,isDup,isValid
     """
       will write out data to csv. valid and singularly occurring images will not 
       be logged. duplicates and invalids will be logged to csv. csv format 
@@ -105,11 +104,8 @@ class MGCLChecker:
       iterate through all the files, check if they exist in the 'self.scanned' dictionary.
       if they do, add to duplicates. Add unhandled edge cases to 'self.edge_cases'
     """
-    # print(files)
-    # return
     print("\nFiles collected... Analyzing...\n")
     for filepath in files:
-      # print(filepath)
       filename = os.path.basename(filepath)
       valid = True
 
@@ -144,7 +140,6 @@ class MGCLChecker:
 
     print("\nCollecting files...")
     self.verfiy_files(self.collect_files())
-    # print(files)
 
     print("\nProgram completed.\n")
     self.reset()
