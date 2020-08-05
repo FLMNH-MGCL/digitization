@@ -5,54 +5,64 @@ import datetime
 from lib.Logger import Logger
 from lib.Helpers import Helpers
 
-"""
-This assumes the following folder structure:
-    ../families/genera/collection_dates/*specimen images here*
-"""
+# may not be necessary to have this data class
+# class Occurence:
+#     def __init__(self, parent_folder, file_name):
+#         self._folder = parent_folder
+#         self._name = file_name
+    
+#     @property
+#     def folder(self):
+#         return self._folder
+
+#     @property
+#     def name(self):
+#         return self._name
+
+
 class LegacyUpgrader:
     def __init__(self):
-        self.valid_imgs = ['JPG', 'jpg', 'jpeg', 'JPEG', 'CR2', 'cr2']
         self.parent_directory = ""
         self.edits = dict()
-        self.logger = None
+        self.log_file = ""
+        # self.occurrences = dict()
 
-    def is_valid(self, extension):
-        if extension in self.valid_imgs:
-            return True
-        else: 
-            return False
 
     def get_images(self, path):
         imgs = []
         for img in sorted(os.listdir(path)):
             if os.path.isfile(path + img):
-                img_vec = img.split('.')
-                if len(img_vec) > 1 and self.is_valid(img_vec[1]):
+                if Helpers.valid_image(img):
                     imgs.append(img)
         return imgs
 
-    def FixDateFormat(self, date, path):
-        return date
+    def get_dirs(self, path):
+        dirs = []
+        for _dir in sorted(os.listdir(path)):
+            if os.path.isdir(path + _dir):
+                dirs.append(_dir)
+        return dirs
 
 
     def get_digit_count(self, string):
         return sum(c.isdigit() for c in string)
-
-
-    def remove_duplicates(self):
-        for old_name,new_name in self.edits:
-            if "_DUPL" in new_name:
-                try:
-                    os.remove(new_name)
-                except:
-                    print("Could not find file.")
     
     def get_new_name(self, old_name):
-        # remove male / female distinction
         new_name = old_name
+
+        # remove occurrences of numbers in parentheses
+        # i.e. auto naming convention for duplicates
+        for par_num_str in str(re.findall(r"\(\d+\)", new_name)):
+            new_name = new_name.replace(par_num_str, "").strip()
+
         new_name = new_name.replace("-", "_") # replace hyphens
+        new_name = new_name.replace(" ", "_") # replace spaces
+        new_name = new_name.replace(" ", "") # replace spaces
+
         if not new_name.startswith("MGCL_") and new_name.startswith("MGCL"):
             new_name = new_name.replace("MGCL", "MGCL_")
+            
+        # remove male / female distinction
         new_name = new_name.replace("_M", "")
         new_name = new_name.replace("_F", "")
         # new_name = new_name.replace("_C", "_CROPPED")
@@ -61,61 +71,104 @@ class LegacyUpgrader:
         new_name = re.sub("\_+", "_", new_name)
 
         return new_name
+    
+    def upgrade(self, image, working_directory):
+        extension = '.' + image.split('.')[1]
+        old_name = image.split('.')[0]
+        new_name = self.get_new_name(old_name)
 
-    def upgrade(self):
-        time.sleep(1)
-        families = Helpers.get_dirs(self.parent_directory) # all the family folders
-        for family in families:
-            genera = Helpers.get_dirs(self.parent_directory + family + '/') # all the genus folders
-            for genus in genera:
-                collection = Helpers.get_dirs(self.parent_directory + family + '/' + genus + '/') # all the date folders
-                for date in collection:
-                    working_directory = self.parent_directory + family + '/' + genus + '/' + date + '/'
-                    specimens = self.get_images(working_directory)
-                    visited = []
-                    for specimen in specimens:
-                        extension = '.' + specimen.split('.')[1]
-                        old_name = specimen.split('.')[0]
-                        new_name = self.get_new_name(old_name)
+        if new_name.startswith("MGCL_"):
+            img_vec = new_name.split('_')
 
-                        if new_name.startswith("MGCL_"):
-                            img_vec = new_name.split('_')
+            # check for duplicates
+            if len(img_vec) > 1:
+                # check for duplicate
+                if os.path.exists(working_directory + new_name + extension):
+                    new_name += '_DUPL'
 
-                            # check for duplicates
-                            if len(img_vec) > 1:
-                                # check for duplicate
-                                if new_name in visited:
-                                    new_name += '_DUPL'
-                                else:
-                                    visited.append(new_name)
+                # check digits for error (requires exactly 7 digits)
+                if self.get_digit_count(img_vec[1]) != 7:
+                    print(image + ': File has digit error.')
+                    new_name += '_DIGERROR'
 
-                                # check digits for error (requires exactly 7 digits)
-                                if self.get_digit_count(img_vec[1]) != 7:
-                                    print(specimen + ': File has digit error.')
-                                    new_name += '_DIGERROR'
+            else:
+                print(image + ': Unknown file formatting.')
+                new_name += '_UNKNOWN'
 
-                            else:
-                                print(specimen + ': Unknown file formatting.')
-                                new_name += '_UNKNOWN'
+        else:
+            print(image + ': Unknown file formatting.')
+            new_name += '_UNKNOWN'
 
-                        else:
-                            print(specimen + ': Unknown file formatting.')
-                            new_name += '_UNKNOWN'
+        new_name += extension
+        old_path = working_directory + image
+        new_path = working_directory + new_name
 
-                        new_name += extension
-                        old_path = working_directory + specimen
-                        new_path = working_directory + new_name
+        self.edits.update({old_path : new_path})
 
-                        self.edits.update({old_path : new_path})
+        os.rename(old_path, new_path)
+        print("\nRenaming {} as {}\n".format(old_path, new_path))
 
-                        os.rename(old_path, new_path)
-                        print("\nRenaming {} as {}\n".format(old_path, new_path))
+    def walk(self, path):
+        for subdir in self.get_dirs(path):
+            self.walk(path + subdir + '/')
+        
+        for image in self.get_images(path):
+            self.upgrade(image, path)
 
-        print("All images handled. Please hold...\n")
+    def write_out(self):
+        log_name = Helpers.generate_logname("LEGACY_UPGRADE",".csv", self.parent_directory)
+        with open(log_name) as log_file:
+            for index, (old_path,new_path) in enumerate(self.edits.items()):
+                if index == 0:
+                    log_file.write("old_path,new_path\n")
+                else:
+                    log_file.write("{},{}\n".format(old_path,new_path))
+        self.log_name = log_name
+    
+    def delete_duplicates(self):
+        for _,new_path in self.edits:
+            if "_DUPL" in os.path.basename(new_path):
+                try:
+                    os.remove(new_path)
+                except:
+                    print("Could not locate {} in file system.".format(new_path))
+
+    def undo_edits(self):
+        for old_path,new_path in self.edits:
+            try:
+                os.rename(new_path,old_path)
+            except:
+                print("Could not locate {} in file system.".format(new_path))
+        
+        os.remove(self.parent_directory + self.log_file)
+
+    def end_prompt(self):
+        self.write_out()
+
+        print("Please review chagnes before continuing (check log).\n")
+        time.sleep(4)
+
+        while True:
+            undo = input("Do you wish to undo?\n [1]yes\n [2]no\n --> ")
+            if undo == '1' or undo == 'y' or undo =='yes':
+                self.undo_edits()
+                return
+            elif undo == '2' or undo == 'n' or undo == 'no':
+                break
+            else:
+                print('Input error. Invalid option.')
+                continue
+
+        delete_dupl = input("Do you wish to delete any found duplicates?\n [1]yes\n [2]no\n --> ")
+        if delete_dupl == '1' or delete_dupl == 'y' or delete_dupl == 'yes':
+            double_check = input("Are you sure? This cannot be undone!!\n [1]yes\n [2]no\n --> ")
+            if double_check == '1' or double_check == 'y' or double_check == 'yes':
+                self.delete_duplicates()
+
+
 
     def run(self):
         print('### LEGACY UPGRADER PROGRAM ###\n')
-        print('NOTE: logging is temporarily down...\n')
         prompt = str(
             "\nThis program will upgrade the legacy server data to fit the new standardized filename structure. " \
             "It will first ask for you to input the directory containing the specimen images, alternatively " \
@@ -129,44 +182,9 @@ class LegacyUpgrader:
         path_prompt = "\nPlease input the path to the directory that contains the images:\n--> "
         self.parent_directory = Helpers.get_existing_path(Helpers.path_prompt(path_prompt), True)
 
-        self.upgrade()
-
-
-# def Wait(path):
-#     time.sleep(5)
-
-#     wait = True
-#     print("Program completed... Please review changes.")
-
-#     delete_dupl = input("Do you wish to delete any found duplicates?\n [1]yes\n [2]no\n --> ")
-#     if delete_dupl == '1' or delete_dupl == 'y' or delete_dupl == 'yes':
-#         double_check = input("Are you sure? This cannot be undone!!\n [1]yes\n [2]no\n --> ")
-#         if double_check == '1' or double_check == 'y' or double_check == 'yes':
-#             # DeleteDupl()
-#             print("Deleting will be functional after proper testing...")
-
-#     while wait == True:
-#         undo = input("Do you wish to undo?\n [1]yes\n [2]no\n --> ")
-#         if undo == '1' or undo == 'y' or undo =='yes':
-#             print(Undo())
-#             wait = False
-#         elif undo == '2' or undo == 'n' or undo == 'no':
-#             wait = False
-#             Log(path)
-#         else:
-#             print('Input error. Invalid option.')
-#             continue
-
-#     repeat = input ("Do you want to repeat program in a new parent directory?\n [1]yes\n [2]no\n --> ")
-#     if repeat == '1' or repeat == 'y' or repeat == 'yes':
-#         old_new_paths.clear()
-#         duplicates.clear()
-#         unknowns.clear()
-#         AskUsage()
-#         Upgrade(DirPrompt())
-#     else:
-#         print("Exiting...")
-#         time.sleep(2)
+        self.walk(self.parent_directory)
+        print("All images handled...\n")
+        self.end_prompt()
 
 
 """
@@ -174,8 +192,4 @@ KNOWN BUGS:
     (2) counted as dig error (should be fixed)
         fixed on personal computer, not museum. cannot repeat bug as of yet for testing.
     _2 counted as dig error (should be fixed)
-    not duplicates if diff orientations ? (fixed)
-    fix duplicate calc, eg Dorsal Dorsal Ventral not counted (fixed)
-    MGCL- "MGCL hyphen" #Replace w/ underscores
-    MGCL# (no separation)   #Replace MGCL w/ MGCL_
 """
