@@ -164,7 +164,8 @@ class LegacyUpgrader:
             double_check = input("Are you sure? This cannot be undone!!\n [1]yes\n [2]no\n --> ")
             if double_check == '1' or double_check == 'y' or double_check == 'yes':
                 self.delete_duplicates()
-
+        
+        print()
 
 
     def run(self):
