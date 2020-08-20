@@ -52,8 +52,8 @@ class LegacyUpgrader:
 
         # remove occurrences of numbers in parentheses
         # i.e. auto naming convention for duplicates
-        for par_num_str in str(re.findall(r"\(\d+\)", new_name)):
-            new_name = new_name.replace(par_num_str, "").strip()
+        new_name = re.sub(r"\(\d+\)", "", new_name).strip()
+
 
         new_name = new_name.replace("-", "_") # replace hyphens
         new_name = new_name.replace(" ", "_") # replace spaces
@@ -80,16 +80,25 @@ class LegacyUpgrader:
         if new_name.startswith("MGCL_"):
             img_vec = new_name.split('_')
 
+            print(new_name, img_vec)
+
+            # check digits for error (requires exactly 7 digits)
+            if self.get_digit_count(img_vec[1]) != 7:
+                print(image + ': File has digit error.')
+                new_name += '_DIGERROR'
+
+            # added short circuit for if the new name matches old, as this indicates 
+            # it was already in the proper format and does not need to be altered in 
+            # any way (and therefore does not need to be logged)
+            if old_name == new_name:
+                print("{} already properly named. Skipping...".format(image))
+                return
+
             # check for duplicates
             if len(img_vec) > 1:
                 # check for duplicate
                 if os.path.exists(working_directory + new_name + extension):
                     new_name += '_DUPL'
-
-                # check digits for error (requires exactly 7 digits)
-                if self.get_digit_count(img_vec[1]) != 7:
-                    print(image + ': File has digit error.')
-                    new_name += '_DIGERROR'
 
             else:
                 print(image + ': Unknown file formatting.')
@@ -117,13 +126,13 @@ class LegacyUpgrader:
 
     def write_out(self):
         log_name = Helpers.generate_logname("LEGACY_UPGRADE",".csv", self.parent_directory)
-        with open(log_name) as log_file:
+        with open(self.parent_directory + log_name, "w") as log_file:
             for index, (old_path,new_path) in enumerate(self.edits.items()):
                 if index == 0:
                     log_file.write("old_path,new_path\n")
                 else:
                     log_file.write("{},{}\n".format(old_path,new_path))
-        self.log_name = log_name
+        self.log_file = log_name
     
     def delete_duplicates(self):
         for _,new_path in self.edits:

@@ -17,3 +17,5 @@ __pycache__/
 # museum data
 *.fa
 *.fasta
+testing/
+testing
