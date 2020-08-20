@@ -13,3 +13,7 @@ pip-delete-this-directory.txt
 target/
 __pycache__/
 *.py[cod]
+
+# museum data
+*.fa
+*.fasta
