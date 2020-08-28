@@ -8,6 +8,7 @@
 import os
 from pathlib import Path
 from lib.Helpers import Helpers
+import re
 
 class MGCLChecker:
   def __init__(self):
@@ -73,6 +74,73 @@ class MGCLChecker:
 
     return True
 
+  def extract_family_genus(self, filepath):
+    pattern = r"[a-z]*dae/[a-z]*"
+    family_genus = re.search(pattern, filepath, re.IGNORECASE).group()
+
+    if not family_genus or family_genus == '':
+      # print("Cannot determine family or genus from path to file: {}".format(filepath))
+      return None
+        
+    family_genus_vec = family_genus.split("/")
+
+    if len(family_genus_vec) < 2:
+      # print("Cannot determine family or genus from path to file: {}".format(filepath))
+      return None
+    
+
+    return family_genus_vec
+
+
+  def calculate_priority(self, target, occurrence_list):
+    # if they have same genus and family they are low priority, likely just duplicated numbers
+    # if they have same family but different genus, high priority
+
+    target_family_genus = self.extract_family_genus(target)
+
+    if not target_family_genus:
+      print("Cannot determine family or genus from path to file: {}".format(target))
+      return "cannot determine"
+
+    family = target_family_genus[0]
+    genus = target_family_genus[1]
+
+    priority = ""
+    had_indeterminate = False
+
+    for occurrence in occurrence_list:
+      # get genus & family of occurrence
+      family_genus = self.extract_family_genus(occurrence[0])
+
+      if not family_genus:
+        print("Cannot determine family or genus from path to file: {}".format(target))
+        had_indeterminate = True
+        continue
+        
+      
+      o_family = family_genus[0]
+      o_genus = family_genus[1]
+
+      if o_genus == genus and o_family == family and priority != "high priority":
+        priority = "low priority"
+        continue
+
+      if o_family == family and o_genus != genus:
+        priority = "high priority"
+
+      if o_family != family:
+        priority = "high priority"
+
+    
+      
+    if had_indeterminate and priority == "":
+      return "cannot determine"
+    
+    elif priority == "":
+      return "low priority"
+
+    return priority
+
 
   def write_out(self):
     """
@@ -83,19 +151,22 @@ class MGCLChecker:
     csv_name = Helpers.generate_logname("MGCL_CHECKER", ".csv", self.target_directory)
     print("Writing invalid or duplicate values to: {}/{}\n".format(self.target_directory,csv_name))
     dest_file = open(r"{}/{}".format(self.target_directory, csv_name),"w+")
-    dest_file.write("path to file,has duplicate,is valid\n")
+    dest_file.write(",path to file,has duplicate,is valid\n")
 
     for key in self.scanned:
-      ocurrence_list = self.scanned[key]
+      occurrence_list = self.scanned[key]
       is_dup = False
+      priority = ""
 
-      if len(ocurrence_list) > 1:
+      if len(occurrence_list) > 1:
         is_dup = True
-      for item in ocurrence_list:
+
+      for item in occurrence_list:  
         print("path to file: {}\nhas duplicate: {}\nis valid: {}\n".format(item[0], is_dup, item[1]))
         # only write files that are dups or invalid
         if is_dup or not item[1]:
-          dest_file.write("{},{},{}\n".format(item[0], is_dup, item[1]))
+          priority = self.calculate_priority(item[0], occurrence_list)
+          dest_file.write("{},{},{},{}\n".format(priority, item[0], is_dup, item[1]))
       
     dest_file.close()
 
@@ -124,6 +195,7 @@ class MGCLChecker:
         self.scanned[filename].append((filepath, valid))
       
     self.write_out()
+    print(self.scanned)
 
   
   def run(self):

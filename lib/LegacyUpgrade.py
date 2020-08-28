@@ -80,7 +80,7 @@ class LegacyUpgrader:
         if new_name.startswith("MGCL_"):
             img_vec = new_name.split('_')
 
-            print(new_name, img_vec)
+            # print(new_name, img_vec)
 
             # check digits for error (requires exactly 7 digits)
             if self.get_digit_count(img_vec[1]) != 7:
