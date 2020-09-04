@@ -76,10 +76,15 @@ class MGCLChecker:
 
   def extract_family_genus(self, filepath):
     pattern = r"[a-z]*dae/[a-z]*"
-    family_genus = re.search(pattern, filepath, re.IGNORECASE).group()
+    family_genus = re.search(pattern, filepath, re.IGNORECASE)
 
-    if not family_genus or family_genus == '':
+    if not family_genus:
       # print("Cannot determine family or genus from path to file: {}".format(filepath))
+      return None
+
+    family_genus = family_genus.group()
+
+    if family_genus == "":
       return None
         
     family_genus_vec = family_genus.split("/")

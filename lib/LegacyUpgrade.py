@@ -68,7 +68,7 @@ class LegacyUpgrader:
         # new_name = new_name.replace("_C", "_CROPPED")
 
         # sub repeating underscores with single underscore
-        new_name = re.sub("\_+", "_", new_name)
+        new_name = re.sub(r"\_+", "_", new_name)
 
         return new_name
     
