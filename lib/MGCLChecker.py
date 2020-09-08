@@ -75,7 +75,7 @@ class MGCLChecker:
     return True
 
   def extract_family_genus(self, filepath):
-    pattern = r"[a-z]*dae/[a-z]*"
+    pattern = r"[a-z]*dae[\\/][a-z]*"
     family_genus = re.search(pattern, filepath, re.IGNORECASE)
 
     if not family_genus:
@@ -83,10 +83,12 @@ class MGCLChecker:
       return None
 
     family_genus = family_genus.group()
+    print(family_genus)
 
     if family_genus == "":
       return None
-        
+    
+    family_genus.replace("\\", "/")
     family_genus_vec = family_genus.split("/")
 
     if len(family_genus_vec) < 2:
@@ -167,7 +169,7 @@ class MGCLChecker:
         is_dup = True
 
       for item in occurrence_list:  
-        print("path to file: {}\nhas duplicate: {}\nis valid: {}\n".format(item[0], is_dup, item[1]))
+        # print("path to file: {}\nhas duplicate: {}\nis valid: {}\n".format(item[0], is_dup, item[1]))
         # only write files that are dups or invalid
         if is_dup or not item[1]:
           priority = self.calculate_priority(item[0], occurrence_list)
@@ -200,7 +202,7 @@ class MGCLChecker:
         self.scanned[filename].append((filepath, valid))
       
     self.write_out()
-    print(self.scanned)
+
 
   
   def run(self):
