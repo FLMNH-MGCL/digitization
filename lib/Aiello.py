@@ -3,8 +3,12 @@ import pandas as pd
 from shutil import copyfile
 import time
 import sys
-from lib.Logger import Logger
-from lib.Helpers import Helpers
+try:
+    from lib.Logger import Logger
+    from lib.Helpers import Helpers
+except:
+    from Logger import Logger
+    from Helpers import Helpers
 
 class AielloProject:
     def __init__(self):

@@ -7,8 +7,12 @@
 
 import os
 from pathlib import Path
-from lib.Helpers import Helpers
 import re
+import argparse
+try:
+  from lib.Helpers import Helpers
+except:
+  from Helpers import Helpers
 
 class MGCLChecker:
   def __init__(self):
@@ -222,5 +226,17 @@ class MGCLChecker:
 
     print("\nProgram completed.\n")
     self.reset()
+
+  def cli(self):
+    pass
+
+if __name__ == "__main__":
+  my_parser = argparse.ArgumentParser(description="Search through a filesystem at a given starting point and attempt to find any misformatted / duplicated filenames.")
+  my_parser.add_argument('-d', '--start_dir', required=True, type=str, help="path to the starting directory")
+  args = my_parser.parse_args()
+
+  start_dir = args.start_dir
+  checker = MGCLChecker()
+  
 
 
