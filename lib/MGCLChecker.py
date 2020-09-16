@@ -6,7 +6,8 @@
 """
 
 import os
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
+from lib.Helpers import Helpers
 import re
 import argparse
 try:
@@ -87,16 +88,21 @@ class MGCLChecker:
       return None
 
     family_genus = family_genus.group()
-    print(family_genus)
 
     if family_genus == "":
       return None
     
-    family_genus.replace("\\", "/")
+    # family_genus.replace("\\", "/")
+
+    try:
+      family_genus = PureWindowsPath(family_genus).as_posix()
+    except:
+      # not on windows, no need to worry about this
+      pass
+
     family_genus_vec = family_genus.split("/")
 
     if len(family_genus_vec) < 2:
-      # print("Cannot determine family or genus from path to file: {}".format(filepath))
       return None
     
 

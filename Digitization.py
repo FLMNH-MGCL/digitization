@@ -1,6 +1,6 @@
 from lib.Hlopp import HloppReader
 from lib.Aiello import AielloProject
-from lib.Convert import Converter
+# from lib.Convert import Converter
 from lib.LegacyUpgrade import LegacyUpgrader
 from lib.Rename import LegacyRenamer
 from lib.Rescale import Rescaler
@@ -15,7 +15,7 @@ class App:
     def __init__(self):
         self.hlopp = HloppReader()
         self.aiello = AielloProject()
-        self.converter = Converter()
+        # self.converter = Converter()
         self.legacy_upgrader = LegacyUpgrader()
         self.renamer = LegacyRenamer()
         self.rescaler = Rescaler()
@@ -32,7 +32,8 @@ class App:
         elif selection == "aiello":
             self.aiello.run()
         elif selection == "convert":
-            self.converter.run()
+            # self.converter.run()
+            pass
         elif selection == "datamatrix":
             pass
         elif selection == "hlopp":
