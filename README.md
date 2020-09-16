@@ -1,5 +1,5 @@
 # Scripts for the FLMNH
-This repository serves as a collection of library classes, scripts and other python projects developed to help improve the workflow for some of the post processesing tasks of the digitization group here at the Florida Museum of Natural History at UF.
+This repository serves as a collection of library classes, scripts and other projects developed to help improve the workflow for some of the post processesing tasks of the digitization group here at the Florida Museum of Natural History at UF.
 <br/><br/>
 
 ### Installing Dependencies:
