@@ -168,7 +168,7 @@ class MGCLChecker:
     csv_name = Helpers.generate_logname("MGCL_CHECKER", ".csv", self.target_directory)
     print("Writing invalid or duplicate values to: {}/{}\n".format(self.target_directory,csv_name))
     dest_file = open(r"{}/{}".format(self.target_directory, csv_name),"w+")
-    dest_file.write(",path to file,has duplicate,is valid\n")
+    dest_file.write(",path to file,has duplicate,is valid,size\n")
 
     for key in self.scanned:
       occurrence_list = self.scanned[key]
@@ -183,7 +183,8 @@ class MGCLChecker:
         # only write files that are dups or invalid
         if is_dup or not item[1]:
           priority = self.calculate_priority(item[0], occurrence_list)
-          dest_file.write("{},{},{},{}\n".format(priority, item[0], is_dup, item[1]))
+          size = Path(item[0]).stat().st_size
+          dest_file.write("{},{},{},{},{}\n".format(priority, item[0], is_dup, item[1], size))
       
     dest_file.close()
 
