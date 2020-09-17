@@ -3,6 +3,8 @@ import sys
 import argparse
 import textwrap
 import re
+from datetime import datetime
+import pandas as pd
 from pathlib import Path
 from Helpers import Helpers
 
@@ -17,21 +19,56 @@ class Suspector:
     self.ranges = ranges
     self.range_csv = range_csv
     self.suspects = []
+
+  @staticmethod 
+  def check_valid_sources(filepath, ext):
+      file_vec = os.path.basename(filepath).split(".")
+      if len(file_vec) < 2:
+          error_message("provided file is missing a valid extension")
+      
+      passed_ext = file_vec[1]
+
+      if ext != passed_ext.lower():
+          error_message("passed extension {} must match either csv or xlsx".format(passed_ext))
+
+      return True
   
   @staticmethod
-  def parse_csv(file_path):
+  def parse_csv(file_path, is_csv):
     """ 
     Attempts to parse CSV data of bounding ranges
 
     :param file_path: The os path str to the CSV file
     :type file_path: str
 
-    :param upper: The upper bound of the tuple range
-    :type upper: unsigned integer
-
-    :rtype: bool
+    :return: an array of str, ordered list of lower,upper bound pairs
+    :rtype: str[]
     """
-    pass
+    ext = "csv" if is_csv else "xlsx"
+    Suspector.check_valid_sources(file_path, ext)
+
+    raw_data = None
+    ranges = []
+
+    if is_csv:
+      raw_data = pd.read_csv(file_path)
+    else:
+      raw_data = pd.read_excel(file_path)
+    
+    for _, row in raw_data.iterrows():
+      try:
+        lower = str(row['lower'])
+        upper = str(row['upper'])
+
+        ranges.append(lower)
+        ranges.append(upper)
+      except:
+        error_message("missing either 'lower' or 'upper' bounds column in file. please run --help command to see supported structure for file inputs")
+    
+    return ranges
+      
+
+
 
   @staticmethod
   def validate_range(lower,upper):
@@ -69,7 +106,7 @@ class Suspector:
       upper = ranges[i+1]
       
       if (len(lower) < 6 or len(lower) > 8) or (len(upper) < 6 or len(upper) > 8):
-        error_message("invalid ranges provided. Could not convert {} or {} to an integer type.".format(lower, upper))
+        error_message("invalid ranges provided. Bounds must be between 6 and 8 digits")
 
       try:
         lower = int(ranges[i])
@@ -108,6 +145,23 @@ class Suspector:
     
     return False
   
+  def print_lineup(self):
+    """ 
+    lineup... get it? suspects? lineup? tough crowd... well, it just prints the 'suspects' found
+    """
+    now = datetime.now()
+    timestamp = "{}_{}_{}-{}:{}".format(now.year, now.month, now.day, now.hour, now.minute)
+    log_path = os.path.join(self.start_dir, "SUSPECTOR_LOG_{}.csv".format(timestamp))
+  
+    print("\nPrinting suspect line-up...")
+
+    with open(log_path, "w") as log:
+      log.write("suspects\n")
+      for suspect in self.suspects:
+        log.write("{}\n".format(suspect))
+        print(suspect)
+
+  
   def run(self):
     """ 
     Main function for this utility class. Will collect files and perform all the checks.
@@ -117,8 +171,9 @@ class Suspector:
     files = self.collect_files()
   
     for f in files:
-      # TODO: change this to check ONLY filename not whole path
-      matches = re.search(r"[0-9]{6,8}", f)
+      # note, I take the basename here to reduce the chance of a false positive in the event somewhere in the 
+      # file path there is a match before the file name itself
+      matches = re.search(r"[0-9]{6,8}", os.path.basename(f))
 
       if matches is None:
         print("{}...".format(f), "failed! No regex match could be found!")
@@ -144,9 +199,8 @@ class Suspector:
       
       else:
         print("{}...".format(f), "passed!")
-    
-    print()
-    print(self.suspects)
+
+    self.print_lineup()
 
 
 def cli():
@@ -155,31 +209,43 @@ def cli():
   epilog=textwrap.dedent('''\
           CSV Format:
              lower,upper
-             1000,1010
-             2002,2030
+             100000,100010
+             200002,200030
              ...
 
           Example Runs:
             python3 ./suspect_numbers.py --start_dir /fake/path --ranges 1000 1003 2003 2030 2035 2042
-            python3 ./suspect_numbers.py --start_dir /fake/path --file /path/to/file.csv
+            python3 ./suspect_numbers.py --start_dir /fake/path --csv_file /path/to/file.csv
          '''))
   my_parser.add_argument('-d', '--start_dir', required=True, type=str, help="path to the starting directory")
 
   group = my_parser.add_mutually_exclusive_group(required=True)
-  group.add_argument('-r','--ranges', action='store',nargs='+', dest='ranges', help='List of ranges')
-  group.add_argument('-f','--file', action='store', nargs=1, dest='file_in', help='Path to CSV of ranges')
+  group.add_argument('-r','--ranges', action='store', nargs='+', dest='ranges', help='List of ranges')
+  group.add_argument('-c', '--csv_file', action='store', help="path to CSV of ranges")
+  group.add_argument('-e','--excel_file', action='store', help="path to excelsheet of ranges")
 
   args = my_parser.parse_args()
 
   start_dir = args.start_dir
   ranges = args.ranges
-  file_in = args.file_in
+  csv_file = args.csv_file
+  excel_file = args.excel_file
 
-  if len(ranges) % 2 != 0:
+  suspector = None
+
+  if ranges != None and len(ranges) % 2 != 0:
     print("usage: suspect_numbers.py [-h] -d START_DIR (-r RANGES [RANGES ...] | -f FILE_IN)")
     error_message("invalid range list provided, you must have both lower and upper bounds for each pair")
-    
-  suspector = Suspector(start_dir, Suspector.construct_ranges(ranges), file_in)
+
+  if ranges is None:
+    if csv_file is not None:
+      parsed_ranges = Suspector.parse_csv(csv_file, True)
+      suspector = Suspector(start_dir, Suspector.construct_ranges(parsed_ranges), csv_file)
+    else:
+      parsed_ranges = Suspector.parse_csv(excel_file, False)
+      suspector = Suspector(start_dir, Suspector.construct_ranges(parsed_ranges), csv_file)
+  else:
+    suspector = Suspector(start_dir, Suspector.construct_ranges(ranges))
 
   print("Program starting...\n")
   suspector.run()
