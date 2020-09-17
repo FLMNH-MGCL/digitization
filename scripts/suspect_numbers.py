@@ -10,7 +10,7 @@ def error_message(message):
   print("suspect_numbers.py: error:", message)
   sys.exit(1) 
 
-
+# TODO: add CSV parsing
 class Suspector:
   def __init__(self, start_dir="", ranges=None, range_csv=None):
     self.start_dir = start_dir
@@ -19,7 +19,18 @@ class Suspector:
     self.suspects = []
   
   @staticmethod
-  def parse_csv():
+  def parse_csv(file_path):
+    """ 
+    Attempts to parse CSV data of bounding ranges
+
+    :param file_path: The os path str to the CSV file
+    :type file_path: str
+
+    :param upper: The upper bound of the tuple range
+    :type upper: unsigned integer
+
+    :rtype: bool
+    """
     pass
 
   @staticmethod
