@@ -19,3 +19,6 @@ __pycache__/
 *.fasta
 testing/
 testing
+
+rust
+rust/**/*

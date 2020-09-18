@@ -10,14 +10,15 @@ from pathlib import Path, PureWindowsPath
 from lib.Helpers import Helpers
 import re
 import argparse
+import shutil
 try:
   from lib.Helpers import Helpers
 except:
   from Helpers import Helpers
 
 class MGCLChecker:
-  def __init__(self):
-    self.target_directory = ""
+  def __init__(self, target_directory=""):
+    self.target_directory = target_directory
 
     # { filename, [(path, valid)] }
     self.scanned = dict()
@@ -28,7 +29,6 @@ class MGCLChecker:
     # contains invalids or other
     self.edge_cases = []
 
-    # self.error_log = []
 
   def reset(self):
     self.target_directory = ""
@@ -168,7 +168,7 @@ class MGCLChecker:
     csv_name = Helpers.generate_logname("MGCL_CHECKER", ".csv", self.target_directory)
     print("Writing invalid or duplicate values to: {}/{}\n".format(self.target_directory,csv_name))
     dest_file = open(r"{}/{}".format(self.target_directory, csv_name),"w+")
-    dest_file.write(",path to file,has duplicate,is valid,size\n")
+    dest_file.write(",path,has duplicate,is valid,size\n")
 
     for key in self.scanned:
       occurrence_list = self.scanned[key]
@@ -185,7 +185,11 @@ class MGCLChecker:
           priority = self.calculate_priority(item[0], occurrence_list)
           size = Path(item[0]).stat().st_size
           dest_file.write("{},{},{},{},{}\n".format(priority, item[0], is_dup, item[1], size))
+
+          # if self.auto_relocate:
+          #   shutil.copyfile(item[0],)
       
+    
     dest_file.close()
 
   def verfiy_files(self, files):
@@ -210,7 +214,7 @@ class MGCLChecker:
 
       else:
         self.scanned[filename] = []
-        self.scanned[filename].append((filepath, valid))
+        self.scanned[filename].append((os.path.abspath(filepath), valid))
       
     self.write_out()
 
@@ -240,6 +244,7 @@ class MGCLChecker:
 if __name__ == "__main__":
   my_parser = argparse.ArgumentParser(description="Search through a filesystem at a given starting point and attempt to find any misformatted / duplicated filenames.")
   my_parser.add_argument('-d', '--start_dir', required=True, type=str, help="path to the starting directory")
+  # my_parser.add_argument('-r', '--relocate_dir', required=False, type=str, help="to where bad images will go")
   args = my_parser.parse_args()
 
   start_dir = args.start_dir
