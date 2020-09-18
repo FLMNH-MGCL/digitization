@@ -23,6 +23,19 @@ class ConfigTypes(Enum):
     return self.name == rhs
 
 class Relocator:
+  """
+  Rather than document each individual class method, I will overview this class here.
+  Relocator will execute multiple shutil.copyfile commands based on the log file 
+  generated from another script. Some scripts that filter out troublesome / bad
+  data output logs containing the paths to said data. Each script may have a slightly 
+  different logging format, which is why each script has its own corresponding class method 
+  (e.g. the MGCLChecker script has its own self.mgclchecker method). The general outline for 
+  each function is as follows:
+
+  iterate through each row of the log csv file
+  grab the path of bad data point
+  copy data to new location
+  """
   def __init__(self, config=ConfigTypes.DEFAULT, log_location="", destination=""):
     self.config = config
     self.log_location = log_location
@@ -31,6 +44,10 @@ class Relocator:
 
   @staticmethod
   def check_valid_construction(log, destination):
+    """
+    Checks validity of log file and destination directory. Will sys.exit on invalid 
+    file or directory
+    """
     if not os.path.exists(log) and not os.path.isfile(log) and pathlib.Path(log).suffix != ".csv":
       error_message("{} either does not exist or is the wrong file type".format(log))
 
@@ -63,11 +80,18 @@ class Relocator:
       print()
 
   def run(self):
+    """
+    Runs the appropriate method according to the config selected. E.g. If config
+    if MGCLCHECKER then self.mgclchecker will be executed.
+    """
     if self.config == ConfigTypes.MGCLCHECKER:
       self.mgclchecker()
 
 
 def cli():
+  """
+  Runs the CLI version of this script: collects arguments and intitializes the Relocator class accordingly
+  """
   my_parser = argparse.ArgumentParser(description="Relocate troublesome images based on the log output of other scripts", 
   formatter_class=argparse.RawDescriptionHelpFormatter,
   epilog=textwrap.dedent('''\
