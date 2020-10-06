@@ -22,3 +22,5 @@ testing
 
 rust
 rust/**/*
+
+config.json

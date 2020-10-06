@@ -54,6 +54,21 @@ class Relocator:
     if not os.path.exists(destination) and not os.path.isdir(destination):
       error_message("{} either does not exist or is not a directory".format(destination))
 
+  def relocate(self, old_location, filename):
+    new_filename = filename
+    tentative_path = os.path.abspath(os.path.join(self.destination, new_filename))
+    raw_path = pathlib.Path(tentative_path)
+    ext = raw_path.suffix 
+    i = 1
+
+    while os.path.exists(tentative_path):
+      new_filename = raw_path.stem + "_DUP_{}".format(i)
+      tentative_path = os.path.abspath(os.path.join(self.destination, "{}{}".format(new_filename, ext)))
+      i+=1
+
+    print("attempting copy of {} to {}".format(old_location, tentative_path))
+    shutil.copyfile(old_location, tentative_path)
+
   def mgclchecker(self):
     raw_data = pd.read_csv(self.log_location)
 
@@ -67,13 +82,11 @@ class Relocator:
       
       filename = os.path.basename(path)
       try:
-        new_location = os.path.abspath(os.path.join(self.destination, filename))
         old_location = os.path.abspath(path)
-        print("attempting copy of {} to {}".format(old_location, new_location))
+        self.relocate(old_location, filename)
 
-        shutil.copyfile(old_location, new_location)
+        # shutil.copyfile(old_location, new_location)
       except Exception as exception:
-        print(exception)
         error_message("{}... failed to copy {}... skipping".format(exception, old_location), False)
         self.failures.append(old_location)
       
