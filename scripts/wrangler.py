@@ -1,16 +1,183 @@
 import gspread # https://gspread.readthedocs.io/en/latest/index.html
+import os
+import sys
+import argparse
+import textwrap
+import re
+import pandas as pd
 
-gc = gspread.service_account(filename='config.json')
+def error_message(message):
+  print("wrangler.py: error:", message)
+  sys.exit(1) 
 
-sh = gc.open_by_key('1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw')
+class GDriveConnector:
+  def __init__(self, sheet_id, config_location):
+    self.sheet_id = sheet_id
+    self.config = config_location
 
-worksheets = sh.worksheets()
+    try:
+      print("connecting to Google Sheet document... ", end="")
+      self.connection = gspread.service_account(filename=config_location)
+      self.document = self.connection.open_by_key(self.sheet_id)
+      print("success!")
+      print("currently viewing document:", self.document.title)
+    except Exception as error:
+      print("failed!")
+      error_message(error)
 
-seq_id_worksheet = worksheets[0]
+  @staticmethod
+  def extract_id(url):
+    return re.search(r"/d/(.*)/", url)
+    
 
-seq_id_headers = seq_id_worksheet.row_values(1)
+class Wrangler:
+  def __init__(self, start_dir, config_location, excel_file, csv_file, sheet_id, sheet_url):
+    if sheet_url is not None:
+      # get ID
+      _id = GDriveConnector.extract_id(sheet_url)
 
-print(seq_id_headers)
+      # attempt to get ID from regex match obj
+      if _id is None:
+        error_message("could not extract ID from URL to make GDrive Connection")
+      else:
+        try:
+          print(_id.group(1), config_location)
+          self.gconnection = GDriveConnector(str(_id.group(1)), config_location)
+        except:
+          error_message("could not extract ID from URL to make GDrive Connection")
+
+    else:
+      self.gconnection = GDriveConnector(sheet_id, config_location)
+    
+
+    if excel_file is None:
+      self.csv_file = csv_file
+      self.raw_data = Wrangler.parse_file(self.csv_file, True)
+    else:
+      self.excel_file = excel_file
+      self.raw_data = Wrangler.parse_file(self.excel_file, False)
+
+    self.start_dir = start_dir
+
+  @staticmethod 
+  def check_valid_sources(filepath, ext):
+      # check file existence
+      if not os.path.exists(filepath):
+        error_message("provided file does not exist in the fs")
+      
+      # check if file is actually a file
+      if os.path.exists(filepath) and not os.path.isfile(filepath):
+        error_message("provided file is not of the correct type (i.e. it is not a file)")
+
+      # check file extension 
+      # TODO: update to use pathlib
+      file_vec = os.path.basename(filepath).split(".")
+      if len(file_vec) < 2:
+          error_message("provided file is missing a valid extension")
+      
+      passed_ext = file_vec[1]
+
+      if ext != passed_ext.lower():
+          error_message("passed extension {} must match either csv or xlsx".format(passed_ext))
+
+      return True
+  
+  @staticmethod
+  def parse_file(file_path, is_csv):
+    """ 
+    Attempts to parse CSV or Excel data of specimen
+
+    :param file_path: The os path str to the CSV file
+    :type file_path: str
+
+    :param is_csv: whether or not file is a CSV
+    :type is_csv: bool
+
+    :return: DataFrame
+    """
+    ext = "csv" if is_csv else "xlsx"
+
+    Wrangler.check_valid_sources(file_path, ext)
+
+    raw_data = None
+
+    if is_csv:
+      raw_data = pd.read_csv(file_path)
+    else:
+      raw_data = pd.read_excel(file_path)
+
+    return raw_data
+
+  def run(self):
+    pass
+    
+    
+
+
+### TESTING GC FUNCTIONS, KEEPING FOR NOW FOR REFERENCE
+
+# config.json is the bot's configuration data, including its credentials/api keys and what not
+# therefore, it is not included in the repo
+# gc = gspread.service_account(filename='config.json')
+
+# this key does not matter, which is why I didn't remove it before pushing. 
+# sh = gc.open_by_key('1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw')
+
+# worksheets = sh.worksheets()
+
+# seq_id_worksheet = worksheets[0]
+
+# seq_id_headers = seq_id_worksheet.row_values(1)
+
+# print(seq_id_headers)
+
+def cli():
+  my_parser = argparse.ArgumentParser(description="Populate a remote Google Sheet with specimen that match a set of requirements given a CSV", 
+  formatter_class=argparse.RawDescriptionHelpFormatter,
+  epilog=textwrap.dedent('''\
+          Example Runs:
+            python3 ./wrangler.py --start_dir /fake/path --csv_file /path/to/file.csv --config ./config.json --sheet_id 1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw
+            python3 ./wrangler.py --start_dir /fake/path --csv_file /path/to/file.csv --config ./config.json --sheet_url https://docs.google.com/spreadsheets/d/1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw/edit#gid=1483107405
+         '''))
+
+  my_parser.add_argument('-d', '--start_dir', required=True, type=str, help="path to the starting directory")
+  my_parser.add_argument('-c', '--config', action='store', required=True, help="path to the config.json")
+
+  group_files = my_parser.add_mutually_exclusive_group(required=True)
+  group_files.add_argument('-f', '--csv_file', action='store', help="path to CSV of ranges")
+  group_files.add_argument('-e', '--excel_file', action='store', help="path to XLSX of ranges")
+
+
+
+  group = my_parser.add_mutually_exclusive_group(required=True)
+  group.add_argument('-i','--sheet_id', action='store', help='the ID extracted from the URL of the Google Sheet document')
+  group.add_argument('-u','--sheet_url', action='store', help="the full URL of the Google Sheet document")
+
+  args = my_parser.parse_args()
+
+  start_dir = args.start_dir
+  csv_file = args.csv_file
+  excel_file = args.excel_file
+  config = args.config
+  sheet_id = args.sheet_id
+  sheet_url = args.sheet_url
+
+  wrangler = Wrangler(start_dir, config, excel_file, csv_file, sheet_id, sheet_url)
+
+  print("Program starting...\n")
+  wrangler.run()
+  print("\nAll computations completed...")
+
+if __name__ == "__main__":
+    cli()
+
+
+"""
+fake tests:
+python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -i fakeid 
+python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -i fakeid -u fakeurl.com
+python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -e /fake/excel.xlsx -i fakeid
+"""
 
 
 """
