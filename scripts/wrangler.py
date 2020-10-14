@@ -10,6 +10,27 @@ def error_message(message):
   print("wrangler.py: error:", message)
   sys.exit(1) 
 
+class FSLocation:
+  def __init__(self, dorsal, ventral, parent_directory, path):
+    self.dorsal = dorsal
+    self.ventral  = ventral
+    self.parent_directory = parent_directory
+    self.path = path
+
+
+class Specimen:
+  def __init__(self, catalog_number, other_catalog_numbers, family, sci_name, genus, spec_epithet, record_id, references):
+    self.catalog_number = catalog_number
+    self.other_catalog_numbers = other_catalog_numbers
+    self.family = family
+    self.sci_name = sci_name
+    self.genus = genus
+    self.spec_epithet = spec_epithet
+    self.record_id = record_id
+    self.references = references
+
+    self.location = None
+
 class GDriveConnector:
   def __init__(self, sheet_id, config_location):
     self.sheet_id = sheet_id
@@ -58,6 +79,7 @@ class Wrangler:
       self.raw_data = Wrangler.parse_file(self.excel_file, False)
 
     self.start_dir = start_dir
+    self.specimens = dict()
 
   @staticmethod 
   def check_valid_sources(filepath, ext):
@@ -108,8 +130,40 @@ class Wrangler:
 
     return raw_data
 
+  def init_dict(self):
+    print("Analyzing local file passed in...")
+
+    for i, (_, row) in enumerate(self.raw_data.iterrows()):
+      if i == 0: 
+        continue
+
+      try:
+        catalog_number = str(row['catalogNumber'])
+        other_catalog_numbers = str(row['otherCatalogNumbers'])
+        family = str(row['family'])
+        sci_name = str(row['scientificName'])
+        genus = str(row['genus'])
+        spec_epithet = str(row['specificEpithet'])
+        record_id = str(row['recordId'])
+        references = str(row['references'])
+
+        specimen = Specimen(catalog_number, other_catalog_numbers, family, sci_name, genus, spec_epithet, record_id, references)
+
+        if catalog_number in self.specimens:
+          print("Duplicate found?")
+        else:
+          self.specimens[catalog_number] = specimen
+
+      except:
+        e = sys.exc_info()[0]
+        error_message("Something went wrong when parsing this row: {}\n\nExact error: \n{}\n".format(i + 1, e))
+    
+    print("All rows handled, andspecimen objects created")
+
+
   def run(self):
-    pass
+    # create the specimen objects
+    self.init_dict()
     
     
 
@@ -144,8 +198,8 @@ def cli():
   my_parser.add_argument('-c', '--config', action='store', required=True, help="path to the config.json")
 
   group_files = my_parser.add_mutually_exclusive_group(required=True)
-  group_files.add_argument('-f', '--csv_file', action='store', help="path to CSV of ranges")
-  group_files.add_argument('-e', '--excel_file', action='store', help="path to XLSX of ranges")
+  group_files.add_argument('-f', '--csv_file', action='store', help="path to CSV of specimen data")
+  group_files.add_argument('-e', '--excel_file', action='store', help="path to XLSX of specimen data")
 
 
 
