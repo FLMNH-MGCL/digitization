@@ -20,6 +20,7 @@ class FSLocation:
 
 class Specimen:
   def __init__(self, catalog_number, other_catalog_numbers, family, sci_name, genus, spec_epithet, record_id, references):
+    self.bombID = None
     self.catalog_number = catalog_number
     self.other_catalog_numbers = other_catalog_numbers
     self.family = family
@@ -30,6 +31,9 @@ class Specimen:
     self.references = references
 
     self.location = None
+  
+  def __str__(self):
+    return "\tbombID: {},\n\tcatalogNumber: {},\n\totherCatalogNumber: {},\n\tfamily: {},\n\tgenus: {},\n\tsepcies: {},\n\trecordId: {},\n\trefs: {},\n\tlocation_obj: {}".format(self.bombID, self.catalog_number, self.other_catalog_numbers, self.family, self.genus, self.spec_epithet, self.record_id, self.references, self.location)
 
 class GDriveConnector:
   def __init__(self, sheet_id, config_location):
@@ -79,7 +83,12 @@ class Wrangler:
       self.raw_data = Wrangler.parse_file(self.excel_file, False)
 
     self.start_dir = start_dir
+
+    # { catalog_number : specimen_obj }
     self.specimens = dict()
+
+    # {catalog_number : [objects] }
+    self.duplicates = dict()
 
   @staticmethod 
   def check_valid_sources(filepath, ext):
@@ -130,8 +139,16 @@ class Wrangler:
 
     return raw_data
 
+  def add_duplicate(self, specimen):
+    if specimen.catalog_number in self.duplicates:
+      self.duplicates[specimen.catalog_number] = self.duplicates[specimen.catalog_number].append(specimen)
+    else:
+      existing_specimen = self.specimens[specimen.catalog_number]
+      self.duplicates[specimen.catalog_number] = [existing_specimen, specimen]
+
+
   def init_dict(self):
-    print("Analyzing local file passed in...")
+    print("Analyzing local file passed in...\n")
 
     for i, (_, row) in enumerate(self.raw_data.iterrows()):
       if i == 0: 
@@ -150,7 +167,8 @@ class Wrangler:
         specimen = Specimen(catalog_number, other_catalog_numbers, family, sci_name, genus, spec_epithet, record_id, references)
 
         if catalog_number in self.specimens:
-          print("Duplicate found?")
+          print("Duplicate found: {} @ row {}".format(catalog_number, i))
+          self.add_duplicate(specimen)
         else:
           self.specimens[catalog_number] = specimen
 
@@ -158,12 +176,26 @@ class Wrangler:
         e = sys.exc_info()[0]
         error_message("Something went wrong when parsing this row: {}\n\nExact error: \n{}\n".format(i + 1, e))
     
-    print("All rows handled, andspecimen objects created")
+    print("\nAll rows handled, specimen objects created")
 
+  def find_in_fs(self):
+    pass
+
+  def connect_with_drive(self):
+    pass
 
   def run(self):
     # create the specimen objects
     self.init_dict()
+    self.find_in_fs()
+    self.connect_with_drive()
+
+    print("\nPrinting duplicate entries...\n")
+    for key,arr in self.duplicates.items():
+      print(key)
+      for spec in arr:
+        print(spec, end="\n\n")
+      print()
     
     
 
