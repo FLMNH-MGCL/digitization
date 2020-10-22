@@ -5,6 +5,8 @@ import argparse
 import textwrap
 import re
 import pandas as pd
+from pathlib import Path, PureWindowsPath
+from Helpers import Helpers
 
 def error_message(message):
   print("wrangler.py: error:", message)
@@ -145,6 +147,60 @@ class Wrangler:
     else:
       existing_specimen = self.specimens[specimen.catalog_number]
       self.duplicates[specimen.catalog_number] = [existing_specimen, specimen]
+  
+  @staticmethod
+  def extract_catalog_number(filepath): 
+    file_obj = Path(filepath)
+    filename = file_obj.stem
+
+    pattern = r'MGCL_[0-9]+'
+    catalog_number_matches = re.search(pattern, filename, re.IGNORECASE)
+
+    if not catalog_number_matches:
+      return None
+
+    catalog_number = catalog_number_matches.group()
+
+    if catalog_number == "":
+      return None
+    
+    return catalog_number
+
+  @staticmethod
+  def extract_family_genus(filepath):
+    pattern = r"[a-z]*dae[\\/][a-z]*"
+    family_genus = re.search(pattern, filepath, re.IGNORECASE)
+
+    if not family_genus:
+      return None
+
+    family_genus = family_genus.group()
+
+    if family_genus == "":
+      return None
+    
+    try:
+      family_genus = PureWindowsPath(family_genus).as_posix()
+    except:
+      # not on windows, no need to worry about this
+      family_genus = family_genus.group()
+      pass
+
+    family_genus_vec = family_genus.split("/")
+
+    if len(family_genus_vec) < 2:
+      return None
+
+    return family_genus_vec
+
+
+  def collect_files(self):
+    """ 
+    Collects all image files, not marked as duplicates at and below the starting directory
+
+    :rtype: list of str representing paths to images in fs
+    """
+    return list(dict((str(f), f.stat().st_size) for f in Path(self.start_dir).glob('**/*') if (f.is_file() and "duplicate" not in str(f) and Helpers.valid_image(str(f)))).keys())
 
 
   def init_dict(self):
@@ -178,8 +234,42 @@ class Wrangler:
     
     print("\nAll rows handled, specimen objects created")
 
+
   def find_in_fs(self):
-    pass
+    print("Searching fs for files, this may take some time...\n")
+    # collect all files
+    files = self.collect_files()
+
+    # for each file in list
+    for f in files:
+      catalog_number = Wrangler.extract_catalog_number(f)
+      family_genus = Wrangler.extract_family_genus(f)
+
+      if catalog_number is None:
+        pass
+
+      if family_genus is None:
+        pass
+
+      family = family_genus[0]
+      genus = family_genus[1]
+
+      if catalog_number in self.specimens:
+        # check if family and genus match
+        specimen = self.specimens[catalog_number]
+
+        if specimen.family == family and specimen.genus == genus:
+          # do something here
+          # TODO: add check for species too? not sure if this is something
+          # extractable from the path
+
+          # should add the location data if this check passes
+          pass
+        else:
+          # log this, found MGCL number but information differs about its 
+          # data than what was extracted from CSV
+          pass
+
 
   def connect_with_drive(self):
     pass
@@ -222,7 +312,7 @@ def cli():
   formatter_class=argparse.RawDescriptionHelpFormatter,
   epilog=textwrap.dedent('''\
           Example Runs:
-            python3 ./wrangler.py --start_dir /fake/path --csv_file /path/to/file.csv --config ./config.json --sheet_id 1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw
+            python3 ./wrangler.py --start_dir /fake/path --csv_file /path/to/file.csv --config ./config.json --sheet_id 1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw\n
             python3 ./wrangler.py --start_dir /fake/path --csv_file /path/to/file.csv --config ./config.json --sheet_url https://docs.google.com/spreadsheets/d/1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw/edit#gid=1483107405
          '''))
 
