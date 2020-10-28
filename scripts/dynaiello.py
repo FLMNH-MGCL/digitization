@@ -15,25 +15,32 @@ def error_message(message):
 
 # its like Aiello, but a little more dynamic (hence, dynaiello)
 class Dynaiello:
-    def __init__(self, start_dir, destination, excel_file, csv_file):
+    def __init__(self, start_dir, destination, input_file, views):
         self.start_dir = start_dir
         self.destination = destination
+        self.views = views
+        self.input_file = input_file
         self.mgcl_nums = dict()
 
-        if excel_file is None:
-            self.csv_file = csv_file
-            self.raw_data = Dynaiello.parse_file(self.csv_file, True)
-        else:
-            self.excel_file = excel_file
-            self.raw_data = Dynaiello.parse_file(self.excel_file, False)
+        self.raw_data = Dynaiello.parse_file(self.input_file)
 
-        rename_headers = self.raw_data.columns.value
+        rename_headers = self.raw_data.columns.values
 
         # We are going to manually extract the catalogNumber during search for rename,
         # every other header will just be appended automatically. Therefore, I am removing
         # the catalogNumber here so it is not duplicated
-        self.rename_pieces = filter(lambda header: header !=
-                                    "catalogNumber", rename_headers)
+        self.rename_pieces = list(filter(lambda header: header !=
+                                         "catalogNumber", rename_headers))
+
+    @staticmethod
+    def collect_files_from_folder(dir):
+        # TODO: do I need to account for case here?
+        accepted = ['*.csv', '*.xlsx']
+        files = []
+        for _type in accepted:
+            files.extend(list(dict((str(f), f.stat().st_size)
+                                   for f in Path(dir).glob(_type) if (f.is_file())).keys()))
+        return files
 
     @staticmethod
     def check_valid_sources(filepath, ext):
@@ -46,22 +53,8 @@ class Dynaiello:
             error_message(
                 "provided file is not of the correct type (i.e. it is not a file)")
 
-        # check file extension
-        # TODO: update to use pathlib
-        file_vec = os.path.basename(filepath).split(".")
-        if len(file_vec) < 2:
-            error_message("provided file is missing a valid extension")
-
-        passed_ext = file_vec[1]
-
-        if ext != passed_ext.lower():
-            error_message(
-                "passed extension {} must match either csv or xlsx".format(passed_ext))
-
-        return True
-
     @staticmethod
-    def parse_file(file_path, is_csv):
+    def parse_file(file_path):
         """
         Attempts to parse CSV or Excel data of specimen
 
@@ -73,13 +66,24 @@ class Dynaiello:
 
         :return: DataFrame
         """
-        ext = "csv" if is_csv else "xlsx"
+        path_obj = Path(file_path)
+
+        ext = path_obj.suffix
+
+        if ext is None:
+            error_message('input_file missing extension')
+
+        ext = ext.replace('.', '')
+
+        if ext.lower() != 'csv' and ext.lower() != 'xlsx':
+            error_message(
+                "input_file extension {} must match either csv or xlsx (ignoring case)".format(ext))
 
         Dynaiello.check_valid_sources(file_path, ext)
 
         raw_data = None
 
-        if is_csv:
+        if ext.lower() == 'csv':
             raw_data = pd.read_csv(file_path)
         else:
             raw_data = pd.read_excel(file_path)
@@ -97,6 +101,9 @@ class Dynaiello:
     def generate_name(self, found, item, catalogNumber):
         ext = found.split('.')[1]
         viewarr = found.split('_')
+
+        # Note: all this does is grab the last character. If there is a malformatted
+        # image file, this will potentially result in invalid handling of the file
         view = viewarr[len(viewarr) - 1]
 
         new_name = catalogNumber
@@ -113,6 +120,18 @@ class Dynaiello:
             if "downscale" in find:
                 print("skipping duplicate image:", find)
 
+            viewarr = find.split('_')
+
+            # Note: all this does is grab the last character. If there is a malformatted
+            # image file, this will potentially result in invalid handling of the file
+            view = viewarr[len(viewarr) - 1]
+
+            if view not in self.views:
+                print('skipping image with view not currently being targeted:', find)
+                print('view found:', view)
+                print('views being targeted:', self.views)
+                continue
+
             catalogNumber = item['catalogNumber'].strip()
 
             new_name = self.generate_name(find, item, catalogNumber)
@@ -123,6 +142,7 @@ class Dynaiello:
             else:
                 print('copying and moving file to destination:',
                       find, 'to', new_name)
+                # TODO: shutil.copy goes here!
 
             if self.mgcl_nums[catalogNumber]:
                 self.mgcl_nums[catalogNumber] = self.mgcl_nums[catalogNumber].append(
@@ -135,10 +155,10 @@ class Dynaiello:
 
         # df.loc[df['column_name'] == some_value]
         for _id, item in self.raw_data.iterrows():
-            filtered_list = filter(
-                lambda fi: item['catalogNumber'].strip() in fi, files)
+            filtered_list = list(filter(
+                lambda fi: item['catalogNumber'].strip() in fi, files))
 
-            if len(filtered_list > 0):
+            if len(filtered_list) > 0:
                 self.handle_items(item, filtered_list)
 
 
@@ -147,25 +167,47 @@ def cli():
                                         formatter_class=argparse.RawDescriptionHelpFormatter,
                                         epilog=textwrap.dedent('''\
           Example Runs:
-            python3 ./dynaiello.py --start_dir /fake/path --csv_file /path/to/file.csv\n
-            python3 ./dynaiello.py --start_dir /fake/path --excel_file /path/to/file.xlsx
+            python3 ./dynaiello.py --start_dir /fake/path --destination /fake/path --input_file /path/to/file.csv
+            python3 ./dynaiello.py --start_dir /fake/path --destination /fake/path --input_file /path/to/file.csv --views D
+            python3 ./dynaiello.py --start_dir /fake/path --destination /fake/path --input_file /path/to/file.csv --views D V L
+            python3 ./dynaiello.py --start_dir /fake/path --destination /fake/path --input_group /path/to/dir/of/csv_or_xlsx_files
          '''))
 
     my_parser.add_argument('-s', '--start_dir', required=True,
-                           type=str, help="path to the starting directory")
+                           type=str, help="The path to the starting directory, images will be located recursively from here")
     my_parser.add_argument('-d', '--destination', required=True,
-                           type=str, help="path to the destination directory")
+                           type=str, help="The path to the destination directory, images will be copied to here")
 
-    group_files = my_parser.add_mutually_exclusive_group(required=True)
-    group_files.add_argument(
-        '-f', '--csv_file', action='store', help="path to CSV of specimen data")
-    group_files.add_argument(
-        '-e', '--excel_file', action='store', help="path to XLSX of specimen data")
+    file_group = my_parser.add_mutually_exclusive_group(required=True)
+    file_group.add_argument(
+        '-f', '--input_file', action='store', help="The path to the CSV or XLSX of specimen data")
+    file_group.add_argument(
+        '-i', '--input_group', action='store', help="The path to a directory containing multiple CSV or XLSX files")
+
+    my_parser.add_argument('-v', '--views', required=False, nargs='+', default=[
+                           'V', 'D'], help="The specimen view(s) to target (i.e. D for Dorsal, V for Ventral)")
 
     args = my_parser.parse_args()
 
+    start_dir = args.start_dir
+    destination = args.destination
+    input_file = args.input_file
+    input_group = args.input_group
+    views = args.views
+
     print("Program starting...\n")
-    # wrangler.run()
+
+    if (input_group is not None):
+        files = Dynaiello.collect_files_from_folder(input_group)
+
+        for f in files:
+            print('Now reviewing', f)
+            dynaiello = Dynaiello(start_dir, destination, f, views)
+            dynaiello.run()
+
+    else:
+        dynaiello = Dynaiello(start_dir, destination, input_file, views)
+
     print("\nAll computations completed...")
 
 
