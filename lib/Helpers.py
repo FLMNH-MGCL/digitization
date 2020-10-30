@@ -2,14 +2,16 @@ import os
 import time
 import datetime
 
-# I chose to wrap these functions in a class so that I am not 
-# confused when I see them called in the other files 
+# I chose to wrap these functions in a class so that I am not
+# confused when I see them called in the other files
 # (basically just me enforcing the use of visual scope)
+
 
 class Helpers:
     @staticmethod
     def ask_usage(prompt):
-        wanted = input("Do you want to see the usage information?\n [1]yes\n [2]no\n --> ")
+        wanted = input(
+            "Do you want to see the usage information?\n [1]yes\n [2]no\n --> ")
         if wanted == '1' or wanted == 'y' or wanted == 'yes':
             print(prompt)
             time.sleep(5)
@@ -32,7 +34,6 @@ class Helpers:
                 elif correct_path.endswith('\\'):
                     correct_path = correct_path[:-2]
 
-        
         return correct_path
 
     @staticmethod
@@ -54,7 +55,7 @@ class Helpers:
 
         if file_path.endswith('/') or file_path.endswith('\\'):
             file_path = file_path[:-1]
-        
+
         return file_path
 
     @staticmethod
@@ -67,23 +68,22 @@ class Helpers:
 
         while not valid:
             recurse = input("\nInvalid input. {}".format(prompt))
-            
+
             if recurse in ['1', '2', '[1]', '[2]']:
                 valid = True
 
-
         if recurse == '1' or recurse == '[1]':
             return False
-        
-        else: 
+
+        else:
             return True
-    
+
     @staticmethod
     def get_dirs(path):
         dirs = []
         try:
             for dir in sorted(os.listdir(path)):
-                if os.path.isdir(path + dir):
+                if os.path.isdir(os.path.join(path, dir)):
                     dirs.append(dir)
             return dirs
         except:
@@ -104,16 +104,16 @@ class Helpers:
         # cannot verify w/o ext
         if len(img_vec) < 2:
             return False
-        
+
         img_ext = img_vec[1]
         if img_ext.lower() not in ["jpg", "jpeg", "cr2", "png"]:
             return False
-        
+
         return True
 
     @staticmethod
     def is_int(target):
-        try: 
+        try:
             int(target)
             return True
         except ValueError:
@@ -129,7 +129,7 @@ class Helpers:
         count = ''
         num = 0
         while os.path.exists(filename + count + ext):
-            if num == 0 :
+            if num == 0:
                 filename += '_'
             num += 1
             count = str(num)
