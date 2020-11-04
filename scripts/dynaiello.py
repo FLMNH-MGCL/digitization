@@ -4,6 +4,8 @@ import argparse
 import textwrap
 import re
 import pandas as pd
+import datetime
+import shutil
 from pathlib import Path, PureWindowsPath
 from Helpers import Helpers
 
@@ -11,6 +13,13 @@ from Helpers import Helpers
 def error_message(message):
     print("dynaiello.py: error:", message)
     sys.exit(1)
+
+
+class DataPoint:
+    def __init__(self, catalogNumber, found_at='', relocated_to=''):
+        self.catalogNumber = catalogNumber
+        self.found_at = found_at
+        self.relocated_to = relocated_to
 
 
 # its like Aiello, but a little more dynamic (hence, dynaiello)
@@ -21,6 +30,9 @@ class Dynaiello:
         self.views = views
         self.input_file = input_file
         self.mgcl_nums = dict()
+
+        # { input file : { mgcl_num : [list of occurrences] } }
+        self.runs = dict()
 
         self.init_data()
 
@@ -105,6 +117,18 @@ class Dynaiello:
 
         return raw_data
 
+    @staticmethod
+    def generate_logname(log_id, filepath):
+        d = datetime.datetime.today()
+        date = '{}_{}_{}'.format(str(d.year), str(d.month), str(d.day))
+
+        ext = '.csv'
+
+        filename = '{}_{}{}'.format(
+            os.path.join(filepath, log_id), date, ext)
+
+        return filename
+
     # Note: I am not removing this, however it is CURRENTLY not in use.
     # I found that wil particularly large datasets (looking at you Catolcala)
     # it took a massive amount of time to collect.
@@ -126,116 +150,159 @@ class Dynaiello:
         # image file, this will potentially result in invalid handling of the file
         view = viewarr[len(viewarr) - 1]
 
+        view = re.sub(r'\..*', '', view)
+
         new_name = catalogNumber
 
         for piece in self.rename_pieces:
-            new_name += "_{}".format(item[piece])
+            if item[piece] is not None and not pd.isnull(item[piece]):
+                print(piece, item[piece])
+                new_name += "_{}".format(str(item[piece]))
 
-        new_name += '_{}.{}'.format(view, ext)
+        if 'view' in self.rename_pieces:
+            new_name += '.{}'.format(ext)
+        else:
+            new_name += '_{}.{}'.format(view, ext)
 
         return new_name
 
-    def handle_items(self, item, filtered_list):
-        for find in filtered_list:
-            if "downscale" in find:
-                print("skipping duplicate image:", find)
-
-            viewarr = find.split('_')
-
-            # Note: all this does is grab the last character. If there is a malformatted
-            # image file, this will potentially result in invalid handling of the file
-            view = viewarr[len(viewarr) - 1]
-
-            if view not in self.views:
-                print('skipping image with view not currently being targeted:', find)
-                print('view found:', view)
-                print('views being targeted:', self.views)
-                continue
-
-            catalogNumber = item['catalogNumber'].strip()
-
-            new_name = self.generate_name(find, item, catalogNumber)
-
-            if os.path.exists(os.path.join(self.destination, new_name)):
-                print("skipping file:", find,
-                      'as its generated name', new_name, 'already exists in destination')
-            else:
-                print('copying and moving file to destination:',
-                      find, 'to', new_name)
-                # TODO: shutil.copy goes here!
-
-            if self.mgcl_nums[catalogNumber]:
-                self.mgcl_nums[catalogNumber] = self.mgcl_nums[catalogNumber].append(
-                    (find, new_name))
-            else:
-                self.mgcl_nums[catalogNumber] = [].append(find)
+    def append_data_point(self, data_point):
+        catalogNumber = data_point.catalogNumber
+        if catalogNumber in self.mgcl_nums:
+            self.mgcl_nums[catalogNumber].append(data_point)
+        else:
+            new_list = []
+            new_list.append(data_point)
+            self.mgcl_nums[catalogNumber] = new_list
 
     def handle_find(self, item, filename, file_path):
+        print('\nFound an instance!...')
+
+        # I want this to throw an error, so it is outside try block
+        catalogNumber = item['catalogNumber'].strip()
+
         if "downscale" in file_path:
             print("skipping duplicate image:", file_path)
+
+            data_point = DataPoint(catalogNumber, file_path)
+            self.append_data_point(data_point)
+            return
 
         viewarr = file_path.split('_')
 
         # Note: all this does is grab the last character. If there is a malformatted
         # image file, this will potentially result in invalid handling of the file
-        view = viewarr[len(viewarr) - 1].split(".")[0]
+        view = viewarr[len(viewarr) - 1]
+        view = re.sub(r'\..*', '', view)
 
-        if view not in self.views:
-            print('skipping image with view not currently being targeted:', file_path)
-            print('view found:', view)
-            print('views being targeted:', self.views)
-            return
+        csvView = None
 
-        catalogNumber = item['catalogNumber'].strip()
+        try:
+            # TODO: should this be a list??
+            csvView = item['view'].strip()
+        except:
+            # I don't really need to do anything
+            pass
+
+        if csvView is None:
+            if view not in self.views:
+                print(
+                    'skipping image with view not currently being targeted:', file_path)
+                print('view found:', view)
+                print('views being targeted:', self.views)
+
+                data_point = DataPoint(catalogNumber, file_path)
+                self.append_data_point(data_point)
+
+                return
+
+        else:
+            # TODO: should this lowercase compare or fail if not case match?
+            if view.lower() != csvView.lower():
+                print(
+                    'skipping image with view not currently being targeted:', file_path)
+                print('view found:', view)
+                print('views being targeted:', csvView)
+
+                data_point = DataPoint(catalogNumber, file_path)
+                self.append_data_point(data_point)
+
+                return
 
         new_name = self.generate_name(file_path, item, catalogNumber)
 
         if os.path.exists(os.path.join(self.destination, new_name)):
             print("skipping file:", file_path,
                   'as its generated name', new_name, 'already exists in destination')
+
+            data_point = DataPoint(catalogNumber, file_path)
+            self.append_data_point(data_point)
+
         else:
             print('copying and moving file to destination:',
-                  file_path, 'to', new_name)
-            # TODO: shutil.copy goes here!
+                  file_path, 'to', new_name, '\n')
 
-        if self.mgcl_nums[catalogNumber]:
-            self.mgcl_nums[catalogNumber] = self.mgcl_nums[catalogNumber].append(
-                (file_path, new_name))
-        else:
-            self.mgcl_nums[catalogNumber] = [].append(file_path)
+            shutil.copy(file_path, os.path.join(self.destination, new_name))
+
+            data_point = DataPoint(
+                catalogNumber, file_path, os.path.join(self.destination, new_name))
+
+            self.append_data_point(data_point)
 
     def find_item(self, path, item):
         catalogNumber = item['catalogNumber'].strip()
-        print('\nlooking for', catalogNumber, 'in', path)
+        print('looking in {}...'.format(path))
         if os.path.exists(path):
             for image in sorted(os.listdir(path)):
                 if catalogNumber in image:
-                    self.handle_find(item, image, os.path.join(path + image))
+                    self.handle_find(item, image, os.path.join(path, image))
         else:
             print(
                 "warining: path is not in filesystem (skipping entry)... --> {}".format(path))
 
+    # maybe add check for unix platform, and use find here instead?
+
     def recursive_find_item(self, path, item):
         subdirs = Helpers.get_dirs(path)
-        # print(subdirs)
+
         for subdir in subdirs:
             self.recursive_find_item(os.path.join(path, subdir), item)
+
         self.find_item(path, item)
 
+    def write_log(self):
+        log_filename = Dynaiello.generate_logname(
+            'DYNAIELLO', self.destination)
+
+        with open(log_filename, 'a') as log:
+            log.write('sheet_name,catalogNumber,found_at,relocated_to\n')
+            for filename in self.runs:
+                for mgcl_num in self.runs[filename]:
+                    data_set = self.runs[filename][mgcl_num]
+                    for data_point in data_set:
+                        print('{},{},{},{}\n'.format(
+                            filename, data_point.catalogNumber, data_point.found_at, data_point.relocated_to))
+                        log.write('{},{},{},{}\n'.format(
+                            filename, data_point.catalogNumber, data_point.found_at, data_point.relocated_to))
+
     def run(self):
-        # print('collecting files...', end=' ')
-        # self.files_from_start = self.collect_files()
-        # print('done...')
 
-        # df.loc[df['column_name'] == some_value]
         for _id, item in self.raw_data.iterrows():
-            # filtered_list = list(filter(
-            #     lambda fi: item['catalogNumber'].strip() in fi, self.files_from_start))
-
-            # if len(filtered_list) > 0:
-            #     self.handle_items(item, filtered_list)
+            try:
+                print('\nLooking for {}...\n'.format(item['catalogNumber']))
+            except:
+                print(
+                    'dynaiello.py: error: no catalogNumber column present... skipping entry')
+                continue
 
             self.recursive_find_item(self.start_dir, item)
+
+            # was never found
+            if item['catalogNumber'] not in self.mgcl_nums:
+                data_point = DataPoint(item['catalogNumber'])
+                self.append_data_point(data_point)
+
+        self.runs[self.input_file] = self.mgcl_nums
 
 
 def cli():
@@ -277,18 +344,26 @@ def cli():
         files = Dynaiello.collect_files_from_folder(input_group)
         dynaiello = None
 
+        if (len(files) == 0):
+            print('No valid files could be pulled from: {}...'.format(input_group))
+            print('\nPlease ensure there are CSV or XLSX files at the root of the folder')
+
         for f in files:
             print('Now reviewing', f)
             if dynaiello is None:
+                # start condition
                 dynaiello = Dynaiello(start_dir, destination, f, views)
                 dynaiello.run()
             else:
+                # clear past run contents
                 dynaiello.set_input_file(f)
                 dynaiello.init_data()
                 dynaiello.run()
 
     else:
         dynaiello = Dynaiello(start_dir, destination, input_file, views)
+
+    dynaiello.write_log()
 
     print("\nAll computations completed...")
 
@@ -297,5 +372,10 @@ if __name__ == "__main__":
     cli()
 
 
-# python3 ./dynaiello.py --start_dir /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Script_Test_Images --destination ../testing/Dynaiello --input_group /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Batch1_Catocala10-26-20
+# python3 ./dynaiello.py --start_dir /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Script_Test_Images --destination ../testing/Dynaiello --input_group /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Batch1_Catocala10-26-20/Pulled
+# python3 ./dynaiello.py --start_dir /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Script_Test_Images --destination ../testing/Dynaiello/output --input_group ../testing/Dynaiello/input
+
+
+# meh tests
 # python3 ./dynaiello.py --start_dir /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/PINNED_COLLECTION/IMAGES_UPLOADED/IMAGES_CR2_editing_complete/EREBIDAE_renamed_but_see_prob_folder/Catocala --destination ../testing/Dynaiello --input_group /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Batch1_Catocala10-26-20
+# python3 ./dynaiello.py --start_dir /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Script_Test_Images --destination ../testing/Dynaiello --input_group /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Batch1_Catocala10-26-20/Needs_full_rename
