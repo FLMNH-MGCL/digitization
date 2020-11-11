@@ -38,9 +38,8 @@ class Dynaiello:
 
         self.files_from_start = []
 
-    # TODO: think about what needs to be reset here
-    # def reset(self):
-    #     self.input_file = ''
+    def clear_mgcl_nums(self):
+        self.mgcl_nums.clear()
 
     def init_data(self):
         self.raw_data = Dynaiello.parse_file(self.input_file)
@@ -53,8 +52,8 @@ class Dynaiello:
         # Note: I had to change the lambda logic to be header.find because on instances where
         # a sheet contains two catalogNumber headers, they would be assigned numbers and therefore
         # neither would get filtered out
-        self.rename_pieces = list(filter(lambda header: header.find("catalogNumber") == -1
-                                         and header != "end", rename_headers))
+        self.rename_pieces = list(filter(lambda header: header.find("catalogNumber") == -1 and header.lower(
+        ) != "end" and header.lower() != "start" and header.lower() != "synonym", rename_headers))
 
     def set_input_file(self, new_file):
         self.input_file = new_file
@@ -152,17 +151,21 @@ class Dynaiello:
 
         view = re.sub(r'\..*', '', view)
 
-        new_name = catalogNumber
+        new_name = ''
 
         for piece in self.rename_pieces:
             if item[piece] is not None and not pd.isnull(item[piece]):
                 print(piece, item[piece])
-                new_name += "_{}".format(str(item[piece]))
+                new_name += "{}_".format(str(item[piece]))
 
         if 'view' in self.rename_pieces:
-            new_name += '.{}'.format(ext)
+            new_name += '{}.{}'.format(catalogNumber, ext)
         else:
-            new_name += '_{}.{}'.format(view, ext)
+            # NOTE: notice the formatting is now different when the user does not
+            # specify the view in the CSV file. The format will therefore default to
+            # MGCL_#####_VIEW.EXT. if this should be reverse, just swap the variable
+            # order passed to .format
+            new_name += '{}_{}.{}'.format(catalogNumber, view, ext)
 
         return new_name
 
@@ -240,7 +243,7 @@ class Dynaiello:
 
         else:
             print('copying and moving file to destination:',
-                  file_path, 'to', new_name, '\n')
+                  file_path, 'to', os.path.join(self.destination, new_name), '\n')
 
             shutil.copy(file_path, os.path.join(self.destination, new_name))
 
@@ -295,6 +298,7 @@ class Dynaiello:
                     'dynaiello.py: error: no catalogNumber column present... skipping entry')
                 continue
 
+            # TODO: add wrapping try block?
             self.recursive_find_item(self.start_dir, item)
 
             # was never found
@@ -358,6 +362,7 @@ def cli():
                 # clear past run contents
                 dynaiello.set_input_file(f)
                 dynaiello.init_data()
+                dynaiello.clear_mgcl_nums()
                 dynaiello.run()
 
     else:
@@ -372,7 +377,7 @@ if __name__ == "__main__":
     cli()
 
 
-# python3 ./dynaiello.py --start_dir /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Script_Test_Images --destination ../testing/Dynaiello --input_group /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Batch1_Catocala10-26-20/Pulled
+# python3 ./dynaiello.py --start_dir /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Script_Test_Images --destination /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Script_Test_Destination --input_group /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Batch1_Catocala10-26-20/Pulled
 # python3 ./dynaiello.py --start_dir /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/SPECIAL_PROJECTS/Catocala_Nick_Homziak/Script_Test_Images --destination ../testing/Dynaiello/output --input_group ../testing/Dynaiello/input
 
 
