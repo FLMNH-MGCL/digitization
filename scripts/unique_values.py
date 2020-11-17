@@ -190,7 +190,7 @@ def cli():
         '-g', '--group_by', action='store', nargs='+', required=False, help="The grouping logic for finding unique values (this works similarly to a SQL group by)")
     my_group.add_argument(
         '-t', '--group_for', action='store', nargs='+', required=False, help="The column(s) that the grouping is in terms of (cannot be columns in the group_by). Defaults to all")
-    my_group.add_argument(
+    my_parser.add_argument(
         '-e', '--encoding', action='store', required=False, help="Override the encoding interpretation of the passed in file (default is ISO-8859-1, utf8 is another option)")
 
     args = my_parser.parse_args()
