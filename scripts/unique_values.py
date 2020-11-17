@@ -16,15 +16,16 @@ def error_message(message):
 
 
 class Uniquer:
-    def __init__(self, input_file, destination, group_by, group_for):
+    def __init__(self, input_file, destination, group_by, group_for, encoding='ISO-8859-1'):
         self.input_file = input_file
+        self.encoding = encoding
 
         if destination is None:
             self.destination = str(Path(input_file).parent)
         else:
             self.destination = destination
 
-        self.raw_data = Uniquer.parse_file(input_file)
+        self.raw_data = Uniquer.parse_file(input_file, encoding)
         self.group_by = group_by
         self.group_for = group_for
 
@@ -47,7 +48,7 @@ class Uniquer:
                 "provided file is not of the correct type (i.e. it is not a file)")
 
     @staticmethod
-    def parse_file(file_path):
+    def parse_file(file_path, encoding):
         """
         Attempts to parse CSV or Excel data of specimen
 
@@ -77,7 +78,8 @@ class Uniquer:
         raw_data = None
 
         if ext.lower() == 'csv':
-            raw_data = pd.read_csv(file_path)
+            raw_data = pd.read_csv(
+                file_path, encoding=encoding, low_memory=False)
         else:
             raw_data = pd.read_excel(file_path)
 
@@ -188,6 +190,8 @@ def cli():
         '-g', '--group_by', action='store', nargs='+', required=False, help="The grouping logic for finding unique values (this works similarly to a SQL group by)")
     my_group.add_argument(
         '-t', '--group_for', action='store', nargs='+', required=False, help="The column(s) that the grouping is in terms of (cannot be columns in the group_by). Defaults to all")
+    my_group.add_argument(
+        '-e', '--encoding', action='store', required=False, help="Override the encoding interpretation of the passed in file (default is ISO-8859-1, utf8 is another option)")
 
     args = my_parser.parse_args()
 
@@ -195,12 +199,11 @@ def cli():
     input_file = args.input_file
     group_by = args.group_by
     group_for = args.group_for
-
-    print(input_file, destination, group_by, group_for)
+    encoding = args.encoding
 
     print("Program starting...\n")
 
-    uniquer = Uniquer(input_file, destination, group_by, group_for)
+    uniquer = Uniquer(input_file, destination, group_by, group_for, encoding)
     uniquer.run()
 
     print("\nAll computations completed...")
