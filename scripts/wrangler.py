@@ -34,26 +34,41 @@ class Specimen:
         self.record_id = record_id
         self.references = references
 
-        self.location = None
+        self.occurrences = []
 
     def __str__(self):
-        return "\tbombID: {},\n\tcatalogNumber: {},\n\totherCatalogNumber: {},\n\tfamily: {},\n\tgenus: {},\n\tsepcies: {},\n\trecordId: {},\n\trefs: {},\n\tlocation_obj: {}".format(self.bombID, self.catalog_number, self.other_catalog_numbers, self.family, self.genus, self.spec_epithet, self.record_id, self.references, self.location)
+        return "\tbombID: {},\n\tcatalogNumber: {},\n\totherCatalogNumber: {},\n\tfamily: {},\n\tgenus: {},\n\tsepcies: {},\n\trecordId: {},\n\trefs: {},\n\toccurrences: {}".format(self.bombID, self.catalog_number, self.other_catalog_numbers, self.family, self.genus, self.spec_epithet, self.record_id, self.references, self.occurrences)
 
 
 class GDriveConnector:
-    def __init__(self, sheet_id, config_location):
+    def __init__(self, sheet_id, sheet_url, config_location):
         self.sheet_id = sheet_id
+        self.sheet_url = sheet_url
         self.config = config_location
 
-        try:
-            print("connecting to Google Sheet document... ", end="")
-            self.connection = gspread.service_account(filename=config_location)
-            self.document = self.connection.open_by_key(self.sheet_id)
-            print("success!")
-            print("currently viewing document:", self.document.title)
-        except Exception as error:
-            print("failed!")
-            error_message(error)
+        if sheet_url:
+            try:
+                print("attempting drive connection by url...", end="")
+                self.connection = gspread.service_account(
+                    filename=config_location)
+                self.document = self.connection.open_by_url(self.sheet_url)
+                print("success!")
+
+            except Exception as error:
+                print("failed!\n")
+                error_message(error)
+        else:
+            try:
+                print("attempting drive connection by key... ", end="")
+                self.connection = gspread.service_account(
+                    filename=config_location)
+                self.document = self.connection.open_by_key(self.sheet_id)
+                print("success!")
+                print(self.document.worksheet('MGCL_Image_IDs'))
+
+            except Exception as error:
+                print("failed!")
+                error_message(error)
 
     @staticmethod
     def extract_id(url):
@@ -61,26 +76,13 @@ class GDriveConnector:
 
 
 class Wrangler:
-    def __init__(self, start_dir, config_location, excel_file, csv_file, sheet_id, sheet_url):
+    def __init__(self, start_dir, config_location, excel_file, csv_file, sheet_id, sheet_url, worksheet):
         if sheet_url is not None:
-            # get ID
-            _id = GDriveConnector.extract_id(sheet_url)
-
-            # attempt to get ID from regex match obj
-            if _id is None:
-                error_message(
-                    "could not extract ID from URL to make GDrive Connection")
-            else:
-                try:
-                    print(_id.group(1), config_location)
-                    self.gconnection = GDriveConnector(
-                        str(_id.group(1)), config_location)
-                except:
-                    error_message(
-                        "could not extract ID from URL to make GDrive Connection")
+            self.gconnection = GDriveConnector(
+                None, sheet_url, config_location)
 
         else:
-            self.gconnection = GDriveConnector(sheet_id, config_location)
+            self.gconnection = GDriveConnector(sheet_id, None, config_location)
 
         if excel_file is None:
             self.csv_file = csv_file
@@ -91,13 +93,15 @@ class Wrangler:
 
         self.start_dir = start_dir
 
+        self.worksheet = worksheet
+
         # { catalog_number : specimen_obj }
         self.specimens = dict()
 
         # {catalog_number : [objects] }
         self.duplicates = dict()
 
-    @staticmethod
+    @ staticmethod
     def check_valid_sources(filepath, ext):
         # check file existence
         if not os.path.exists(filepath):
@@ -122,9 +126,9 @@ class Wrangler:
 
         return True
 
-    @staticmethod
+    @ staticmethod
     def parse_file(file_path, is_csv):
-        """ 
+        """
         Attempts to parse CSV or Excel data of specimen
 
         :param file_path: The os path str to the CSV file
@@ -157,7 +161,7 @@ class Wrangler:
             self.duplicates[specimen.catalog_number] = [
                 existing_specimen, specimen]
 
-    @staticmethod
+    @ staticmethod
     def extract_catalog_number(filepath):
         file_obj = Path(filepath)
         filename = file_obj.stem
@@ -175,7 +179,7 @@ class Wrangler:
 
         return catalog_number
 
-    @staticmethod
+    @ staticmethod
     def extract_family_genus(filepath):
         pattern = r"[a-z]*dae[\\/][a-z]*"
         family_genus = re.search(pattern, filepath, re.IGNORECASE)
@@ -203,7 +207,7 @@ class Wrangler:
         return family_genus_vec
 
     def collect_files(self):
-        """ 
+        """
         Collects all image files, not marked as duplicates at and below the starting directory
 
         :rtype: list of str representing paths to images in fs
@@ -272,6 +276,7 @@ class Wrangler:
                     # extractable from the path
 
                     # should add the location data if this check passes
+                    specimen.occurrences.append(f)
                     pass
                 else:
                     # log this, found MGCL number but information differs about its
@@ -283,19 +288,74 @@ class Wrangler:
 
     def run(self):
         # create the specimen objects
-        self.init_dict()
-        self.find_in_fs()
-        self.connect_with_drive()
+        # self.init_dict()
+        # self.find_in_fs()
+        # self.connect_with_drive()
 
-        print("\nPrinting duplicate entries...\n")
-        for key, arr in self.duplicates.items():
-            print(key)
-            for spec in arr:
-                print(spec, end="\n\n")
-            print()
+        print('loading in target worksheet:', self.worksheet, end="...")
+
+        drive_sheet = self.gconnection.document.worksheet(self.worksheet)
+
+        print('loaded!')
+
+        print('converting to pandas dataframe...', end='')
+        df = pd.DataFrame(drive_sheet.get_all_records())
+        print('converted!')
+
+        empty_rows = dict()
+
+        additional_rows = []
+
+        for _, row in df.iterrows():
+            empty_rows[row['Bombycoid_UI']] = row
+
+        for specimen in self.specimens:
+            if not specimen.family or not specimen.genus or not specimen.spec_epithet:
+                # TODO: log
+                continue
+
+            bomb_rows = df.loc[(df['Family'] == specimen.family) & (
+                df['Genus'] == specimen.genus) & (df['Species'] == specimen.spec_epithet)]
+            for i, row in bomb_rows.iterrows():
+                # print(i)
+                if row.isnull()['Image1_file_name'] or row.isnull()['Image2_file_name']:
+                    if len(specimen.occurrences) == 1:
+                        row['Image1_file_name'] = specimen.occurrences[0]
+
+                    elif len(specimen.occurrences) >= 2:
+                        row['Image1_file_name'] = specimen.occurrences[0]
+                        row['Image2_file_name'] = specimen.occurrences[1]
+
+                    df.at[i] = row
+
+                else:
+                    new_row = empty_rows[row['Bombycoid_UI']]
+                    if len(specimen.occurrences) == 1:
+                        new_row['Image1_file_name'] = specimen.occurrences[0]
+
+                    elif len(specimen.occurrences) >= 2:
+                        new_row['Image1_file_name'] = specimen.occurrences[0]
+                        new_row['Image2_file_name'] = specimen.occurrences[1]
+
+                    additional_rows.append(new_row)
+
+        for row in additional_rows:
+            df = df.append(row, ignore_index=True)
+
+        df = df.sort_values(by='Bombycoid_UI')
+        # print("\nPrinting duplicate entries...\n")
+        # for key, arr in self.duplicates.items():
+        #     print(key)
+        #     for spec in arr:
+        #         print(spec, end="\n\n")
+        #     print()
 
 
 # TESTING GC FUNCTIONS, KEEPING FOR NOW FOR REFERENCE
+
+# https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.query.html
+
+# https://pythonexamples.org/pandas-dataframe-add-append-row/
 
 # config.json is the bot's configuration data, including its credentials/api keys and what not
 # therefore, it is not included in the repo
@@ -326,6 +386,9 @@ def cli():
     my_parser.add_argument('-c', '--config', action='store',
                            required=True, help="path to the config.json")
 
+    my_parser.add_argument('-w', '--worksheet', action='store',
+                           required=True, help="name of the tab worksheet in drive")
+
     group_files = my_parser.add_mutually_exclusive_group(required=True)
     group_files.add_argument(
         '-f', '--csv_file', action='store', help="path to CSV of specimen data")
@@ -342,15 +405,17 @@ def cli():
 
     start_dir = args.start_dir
     csv_file = args.csv_file
+    worksheet = args.worksheet
     excel_file = args.excel_file
     config = args.config
     sheet_id = args.sheet_id
     sheet_url = args.sheet_url
 
-    wrangler = Wrangler(start_dir, config, excel_file,
-                        csv_file, sheet_id, sheet_url)
-
     print("Program starting...\n")
+
+    wrangler = Wrangler(start_dir, config, excel_file,
+                        csv_file, sheet_id, sheet_url, worksheet)
+
     wrangler.run()
     print("\nAll computations completed...")
 
@@ -361,7 +426,7 @@ if __name__ == "__main__":
 
 """
 fake tests:
-python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -i fakeid 
+python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -i fakeid
 python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -i fakeid -u fakeurl.com
 python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -e /fake/excel.xlsx -i fakeid
 """
