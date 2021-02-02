@@ -27,3 +27,5 @@ rust/**/*
 config.json
 
 test.py
+
+*.log

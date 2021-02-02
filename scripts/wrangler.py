@@ -7,6 +7,7 @@ import re
 import pandas as pd
 from pathlib import Path, PureWindowsPath
 from Helpers import Helpers
+import logging
 
 
 def error_message(message):
@@ -92,6 +93,9 @@ class Wrangler:
             self.raw_data = Wrangler.parse_file(self.excel_file, False)
 
         self.start_dir = start_dir
+
+        logging.basicConfig(filename=os.path.join(start_dir, 'wrangler.log'), filemode='w',
+                            format='%(levelname)s - %(message)s')
 
         self.worksheet = worksheet
 
@@ -281,27 +285,11 @@ class Wrangler:
                 else:
                     # log this, found MGCL number but information differs about its
                     # data than what was extracted from CSV
+                    logging.warning(
+                        'Found MGCL number, but information differs about its data than what was extracted from CSV: {}'.format(catalog_number))
                     pass
 
-    def connect_with_drive(self):
-        pass
-
-    def run(self):
-        # create the specimen objects
-        # self.init_dict()
-        # self.find_in_fs()
-        # self.connect_with_drive()
-
-        print('loading in target worksheet:', self.worksheet, end="...")
-
-        drive_sheet = self.gconnection.document.worksheet(self.worksheet)
-
-        print('loaded!')
-
-        print('converting to pandas dataframe...', end='')
-        df = pd.DataFrame(drive_sheet.get_all_records())
-        print('converted!')
-
+    def iter_specimen(self, df):
         empty_rows = dict()
 
         additional_rows = []
@@ -311,7 +299,9 @@ class Wrangler:
 
         for specimen in self.specimens:
             if not specimen.family or not specimen.genus or not specimen.spec_epithet:
-                # TODO: log
+                logging.warning(
+                    'Family, Genus and Specific Epithet missing from specimen: ' + str(specimen))
+
                 continue
 
             bomb_rows = df.loc[(df['Family'] == specimen.family) & (
@@ -342,13 +332,27 @@ class Wrangler:
         for row in additional_rows:
             df = df.append(row, ignore_index=True)
 
-        df = df.sort_values(by='Bombycoid_UI')
-        # print("\nPrinting duplicate entries...\n")
-        # for key, arr in self.duplicates.items():
-        #     print(key)
-        #     for spec in arr:
-        #         print(spec, end="\n\n")
-        #     print()
+        return df.sort_values(by='Bombycoid_UI')
+
+    def run(self):
+        print('loading in target worksheet:', self.worksheet, end="...")
+
+        drive_sheet = self.gconnection.document.worksheet(self.worksheet)
+
+        print('loaded!')
+
+        print('converting to pandas dataframe...', end='')
+        df = pd.DataFrame(drive_sheet.get_all_records())
+        print('converted!\n')
+
+        df = self.iter_specimen(df)
+
+        new_sheet = self.gconnection.document.add_worksheet(
+            drive_sheet.title + '_UPDATED', len(df.index), len(df. columns))
+
+        new_sheet.update([df.columns.values.tolist()] + df.values.tolist())
+
+        print(df)
 
 
 # TESTING GC FUNCTIONS, KEEPING FOR NOW FOR REFERENCE
@@ -357,20 +361,6 @@ class Wrangler:
 
 # https://pythonexamples.org/pandas-dataframe-add-append-row/
 
-# config.json is the bot's configuration data, including its credentials/api keys and what not
-# therefore, it is not included in the repo
-# gc = gspread.service_account(filename='config.json')
-
-# this key does not matter, which is why I didn't remove it before pushing.
-# sh = gc.open_by_key('1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw')
-
-# worksheets = sh.worksheets()
-
-# seq_id_worksheet = worksheets[0]
-
-# seq_id_headers = seq_id_worksheet.row_values(1)
-
-# print(seq_id_headers)
 
 def cli():
     my_parser = argparse.ArgumentParser(description="Populate a remote Google Sheet with specimen that match a set of requirements given a CSV",
@@ -423,14 +413,9 @@ def cli():
 if __name__ == "__main__":
     cli()
 
-
-"""
-fake tests:
-python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -i fakeid
-python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -i fakeid -u fakeurl.com
-python3 wrangler.py -d /fake/path -c ./config.json -f /fake/file.csv -e /fake/excel.xlsx -i fakeid
-"""
-
+# CURRENT TESTING
+# python3 wrangler.py --start_dir . --config config.json -e ../testing/wrangler/test.xlsx -u https://docs.google.com/spreadsheets/d/12hPliU-tWEdrd9xxCEU7AW9s1O_D9wd5cTiwkKL1ZYE/edit#gid=515948364 -w MGCL_Image_IDs
+#
 
 """
 wrangler overview:
@@ -461,5 +446,5 @@ loop dictionary entries:
   attempt access of UI by family, genus, species
     if get UI -> assign object bombID
 
-then what?
+Insert images 1, 2 in row. Any additionals get added/appended as new row.
 """
