@@ -16,7 +16,7 @@ def error_message(message):
 
 
 class DataPoint:
-    def __init__(self, catalogNumber, found_at='', relocated_to=''):
+    def __init__(self, catalogNumber, found_at="", relocated_to=""):
         self.catalogNumber = catalogNumber
         self.found_at = found_at
         self.relocated_to = relocated_to
@@ -52,8 +52,15 @@ class Dynaiello:
         # Note: I had to change the lambda logic to be header.find because on instances where
         # a sheet contains two catalogNumber headers, they would be assigned numbers and therefore
         # neither would get filtered out
-        self.rename_pieces = list(filter(lambda header: header.find("catalogNumber") == -1 and header.lower(
-        ) != "end" and header.lower() != "start" and header.lower() != "synonym", rename_headers))
+        self.rename_pieces = list(
+            filter(
+                lambda header: header.find("catalogNumber") == -1
+                and header.lower() != "end"
+                and header.lower() != "start"
+                and header.lower() != "synonym",
+                rename_headers,
+            )
+        )
 
     def set_input_file(self, new_file):
         self.input_file = new_file
@@ -61,11 +68,18 @@ class Dynaiello:
     @staticmethod
     def collect_files_from_folder(dir):
         # TODO: do I need to account for case here?
-        accepted = ['*.csv', '*.xlsx']
+        accepted = ["*.csv", "*.xlsx"]
         files = []
         for _type in accepted:
-            files.extend(list(dict((str(f), f.stat().st_size)
-                                   for f in Path(dir).glob(_type) if (f.is_file())).keys()))
+            files.extend(
+                list(
+                    dict(
+                        (str(f), f.stat().st_size)
+                        for f in Path(dir).glob(_type)
+                        if (f.is_file())
+                    ).keys()
+                )
+            )
         return files
 
     @staticmethod
@@ -77,7 +91,8 @@ class Dynaiello:
         # check if file is actually a file
         if os.path.exists(filepath) and not os.path.isfile(filepath):
             error_message(
-                "provided file is not of the correct type (i.e. it is not a file)")
+                "provided file is not of the correct type (i.e. it is not a file)"
+            )
 
     @staticmethod
     def parse_file(file_path):
@@ -97,19 +112,22 @@ class Dynaiello:
         ext = path_obj.suffix
 
         if ext is None:
-            error_message('input_file missing extension')
+            error_message("input_file missing extension")
 
-        ext = ext.replace('.', '')
+        ext = ext.replace(".", "")
 
-        if ext.lower() != 'csv' and ext.lower() != 'xlsx':
+        if ext.lower() != "csv" and ext.lower() != "xlsx":
             error_message(
-                "input_file extension {} must match either csv or xlsx (ignoring case)".format(ext))
+                "input_file extension {} must match either csv or xlsx (ignoring case)".format(
+                    ext
+                )
+            )
 
         Dynaiello.check_valid_sources(file_path, ext)
 
         raw_data = None
 
-        if ext.lower() == 'csv':
+        if ext.lower() == "csv":
             raw_data = pd.read_csv(file_path)
         else:
             raw_data = pd.read_excel(file_path)
@@ -119,12 +137,11 @@ class Dynaiello:
     @staticmethod
     def generate_logname(log_id, filepath):
         d = datetime.datetime.today()
-        date = '{}_{}_{}'.format(str(d.year), str(d.month), str(d.day))
+        date = "{}_{}_{}".format(str(d.year), str(d.month), str(d.day))
 
-        ext = '.csv'
+        ext = ".csv"
 
-        filename = '{}_{}{}'.format(
-            os.path.join(filepath, log_id), date, ext)
+        filename = "{}_{}{}".format(os.path.join(filepath, log_id), date, ext)
 
         return filename
 
@@ -137,35 +154,45 @@ class Dynaiello:
 
         :rtype: list of str representing paths to images in fs
         """
-        return list(dict((str(f), f.stat().st_size) for f in Path(self.start_dir).glob('**/*') if (f.is_file() and "duplicate" not in str(f) and Helpers.valid_image(str(f)))).keys())
+        return list(
+            dict(
+                (str(f), f.stat().st_size)
+                for f in Path(self.start_dir).glob("**/*")
+                if (
+                    f.is_file()
+                    and "duplicate" not in str(f)
+                    and Helpers.valid_image(str(f))
+                )
+            ).keys()
+        )
 
     # FIXME: does not quite work, adds extension twice. I think this is an error with how I
     # obtain the view (i.e. i dont remove the extension)
     def generate_name(self, found, item, catalogNumber):
-        ext = found.split('.')[1]
-        viewarr = found.split('_')
+        ext = found.split(".")[1]
+        viewarr = found.split("_")
 
         # Note: all this does is grab the last character. If there is a malformatted
         # image file, this will potentially result in invalid handling of the file
         view = viewarr[len(viewarr) - 1]
 
-        view = re.sub(r'\..*', '', view)
+        view = re.sub(r"\..*", "", view)
 
-        new_name = ''
+        new_name = ""
 
         for piece in self.rename_pieces:
             if item[piece] is not None and not pd.isnull(item[piece]):
                 print(piece, item[piece])
                 new_name += "{}_".format(str(item[piece]))
 
-        if 'view' in self.rename_pieces:
-            new_name += '{}.{}'.format(catalogNumber, ext)
+        if "view" in self.rename_pieces:
+            new_name += "{}.{}".format(catalogNumber, ext)
         else:
             # NOTE: notice the formatting is now different when the user does not
             # specify the view in the CSV file. The format will therefore default to
             # MGCL_#####_VIEW.EXT. if this should be reverse, just swap the variable
             # order passed to .format
-            new_name += '{}_{}.{}'.format(catalogNumber, view, ext)
+            new_name += "{}_{}.{}".format(catalogNumber, view, ext)
 
         return new_name
 
@@ -179,10 +206,10 @@ class Dynaiello:
             self.mgcl_nums[catalogNumber] = new_list
 
     def handle_find(self, item, filename, file_path):
-        print('\nFound an instance!...')
+        print("\nFound an instance!...")
 
         # I want this to throw an error, so it is outside try block
-        catalogNumber = item['catalogNumber'].strip()
+        catalogNumber = item["catalogNumber"].strip()
 
         if "downscale" in file_path:
             print("skipping duplicate image:", file_path)
@@ -191,18 +218,18 @@ class Dynaiello:
             self.append_data_point(data_point)
             return
 
-        viewarr = file_path.split('_')
+        viewarr = file_path.split("_")
 
         # Note: all this does is grab the last character. If there is a malformatted
         # image file, this will potentially result in invalid handling of the file
         view = viewarr[len(viewarr) - 1]
-        view = re.sub(r'\..*', '', view)
+        view = re.sub(r"\..*", "", view)
 
         csvView = None
 
         try:
             # TODO: should this be a list??
-            csvView = item['view'].strip()
+            csvView = item["view"].strip()
         except:
             # I don't really need to do anything
             pass
@@ -210,9 +237,10 @@ class Dynaiello:
         if csvView is None:
             if view not in self.views:
                 print(
-                    'skipping image with view not currently being targeted:', file_path)
-                print('view found:', view)
-                print('views being targeted:', self.views)
+                    "skipping image with view not currently being targeted:", file_path
+                )
+                print("view found:", view)
+                print("views being targeted:", self.views)
 
                 data_point = DataPoint(catalogNumber, file_path)
                 self.append_data_point(data_point)
@@ -223,9 +251,10 @@ class Dynaiello:
             # TODO: should this lowercase compare or fail if not case match?
             if view.lower() != csvView.lower():
                 print(
-                    'skipping image with view not currently being targeted:', file_path)
-                print('view found:', view)
-                print('views being targeted:', csvView)
+                    "skipping image with view not currently being targeted:", file_path
+                )
+                print("view found:", view)
+                print("views being targeted:", csvView)
 
                 data_point = DataPoint(catalogNumber, file_path)
                 self.append_data_point(data_point)
@@ -235,33 +264,47 @@ class Dynaiello:
         new_name = self.generate_name(file_path, item, catalogNumber)
 
         if os.path.exists(os.path.join(self.destination, new_name)):
-            print("skipping file:", file_path,
-                  'as its generated name', new_name, 'already exists in destination')
+            print(
+                "skipping file:",
+                file_path,
+                "as its generated name",
+                new_name,
+                "already exists in destination",
+            )
 
             data_point = DataPoint(catalogNumber, file_path)
             self.append_data_point(data_point)
 
         else:
-            print('copying and moving file to destination:',
-                  file_path, 'to', os.path.join(self.destination, new_name), '\n')
+            print(
+                "copying and moving file to destination:",
+                file_path,
+                "to",
+                os.path.join(self.destination, new_name),
+                "\n",
+            )
 
             shutil.copy(file_path, os.path.join(self.destination, new_name))
 
             data_point = DataPoint(
-                catalogNumber, file_path, os.path.join(self.destination, new_name))
+                catalogNumber, file_path, os.path.join(self.destination, new_name)
+            )
 
             self.append_data_point(data_point)
 
     def find_item(self, path, item):
-        catalogNumber = item['catalogNumber'].strip()
-        print('looking in {}...'.format(path))
+        catalogNumber = item["catalogNumber"].strip()
+        print("looking in {}...".format(path))
         if os.path.exists(path):
             for image in sorted(os.listdir(path)):
                 if catalogNumber in image:
                     self.handle_find(item, image, os.path.join(path, image))
         else:
             print(
-                "warining: path is not in filesystem (skipping entry)... --> {}".format(path))
+                "warining: path is not in filesystem (skipping entry)... --> {}".format(
+                    path
+                )
+            )
 
     # maybe add check for unix platform, and use find here instead?
 
@@ -274,65 +317,105 @@ class Dynaiello:
         self.find_item(path, item)
 
     def write_log(self):
-        log_filename = Dynaiello.generate_logname(
-            'DYNAIELLO', self.destination)
+        log_filename = Dynaiello.generate_logname("DYNAIELLO", self.destination)
 
-        with open(log_filename, 'a') as log:
-            log.write('sheet_name,catalogNumber,found_at,relocated_to\n')
+        with open(log_filename, "a") as log:
+            log.write("sheet_name,catalogNumber,found_at,relocated_to\n")
             for filename in self.runs:
                 for mgcl_num in self.runs[filename]:
                     data_set = self.runs[filename][mgcl_num]
                     for data_point in data_set:
-                        print('{},{},{},{}\n'.format(
-                            filename, data_point.catalogNumber, data_point.found_at, data_point.relocated_to))
-                        log.write('{},{},{},{}\n'.format(
-                            filename, data_point.catalogNumber, data_point.found_at, data_point.relocated_to))
+                        print(
+                            "{},{},{},{}\n".format(
+                                filename,
+                                data_point.catalogNumber,
+                                data_point.found_at,
+                                data_point.relocated_to,
+                            )
+                        )
+                        log.write(
+                            "{},{},{},{}\n".format(
+                                filename,
+                                data_point.catalogNumber,
+                                data_point.found_at,
+                                data_point.relocated_to,
+                            )
+                        )
 
     def run(self):
 
         for _id, item in self.raw_data.iterrows():
             try:
-                print('\nLooking for {}...\n'.format(item['catalogNumber']))
+                print("\nLooking for {}...\n".format(item["catalogNumber"]))
             except:
                 print(
-                    'dynaiello.py: error: no catalogNumber column present... skipping entry')
+                    "dynaiello.py: error: no catalogNumber column present... skipping entry"
+                )
                 continue
 
             # TODO: add wrapping try block?
             self.recursive_find_item(self.start_dir, item)
 
             # was never found
-            if item['catalogNumber'] not in self.mgcl_nums:
-                data_point = DataPoint(item['catalogNumber'])
+            if item["catalogNumber"] not in self.mgcl_nums:
+                data_point = DataPoint(item["catalogNumber"])
                 self.append_data_point(data_point)
 
         self.runs[self.input_file] = self.mgcl_nums
 
 
 def cli():
-    my_parser = argparse.ArgumentParser(description="Dynaiello is a version of the Aiello script with less column restrictions. Copy and rename entries based on a CSV file.",
-                                        formatter_class=argparse.RawDescriptionHelpFormatter,
-                                        epilog=textwrap.dedent('''\
+    my_parser = argparse.ArgumentParser(
+        description="Dynaiello is a version of the Aiello script with less column restrictions. Copy and rename entries based on a CSV file.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=textwrap.dedent(
+            """\
           Example Runs:
             python3 ./dynaiello.py --start_dir /fake/path --destination /fake/path --input_file /path/to/file.csv
             python3 ./dynaiello.py --start_dir /fake/path --destination /fake/path --input_file /path/to/file.csv --views D
             python3 ./dynaiello.py --start_dir /fake/path --destination /fake/path --input_file /path/to/file.csv --views D V L
             python3 ./dynaiello.py --start_dir /fake/path --destination /fake/path --input_group /path/to/dir/of/csv_or_xlsx_files
-         '''))
+         """
+        ),
+    )
 
-    my_parser.add_argument('-s', '--start_dir', required=True,
-                           type=str, help="The path to the starting directory, images will be located recursively from here")
-    my_parser.add_argument('-d', '--destination', required=True,
-                           type=str, help="The path to the destination directory, images will be copied to here")
+    my_parser.add_argument(
+        "-s",
+        "--start_dir",
+        required=True,
+        type=str,
+        help="The path to the starting directory, images will be located recursively from here",
+    )
+    my_parser.add_argument(
+        "-d",
+        "--destination",
+        required=True,
+        type=str,
+        help="The path to the destination directory, images will be copied to here",
+    )
 
     file_group = my_parser.add_mutually_exclusive_group(required=True)
     file_group.add_argument(
-        '-f', '--input_file', action='store', help="The path to the CSV or XLSX of specimen data")
+        "-f",
+        "--input_file",
+        action="store",
+        help="The path to the CSV or XLSX of specimen data",
+    )
     file_group.add_argument(
-        '-i', '--input_group', action='store', help="The path to a directory containing multiple CSV or XLSX files")
+        "-i",
+        "--input_group",
+        action="store",
+        help="The path to a directory containing multiple CSV or XLSX files",
+    )
 
-    my_parser.add_argument('-v', '--views', required=False, nargs='+', default=[
-                           'V', 'D'], help="The specimen view(s) to target (i.e. D for Dorsal, V for Ventral)")
+    my_parser.add_argument(
+        "-v",
+        "--views",
+        required=False,
+        nargs="+",
+        default=["V", "D"],
+        help="The specimen view(s) to target (i.e. D for Dorsal, V for Ventral)",
+    )
 
     args = my_parser.parse_args()
 
@@ -344,16 +427,18 @@ def cli():
 
     print("Program starting...\n")
 
-    if (input_group is not None):
+    if input_group is not None:
         files = Dynaiello.collect_files_from_folder(input_group)
         dynaiello = None
 
-        if (len(files) == 0):
-            print('No valid files could be pulled from: {}...'.format(input_group))
-            print('\nPlease ensure there are CSV or XLSX files at the root of the folder')
+        if len(files) == 0:
+            print("No valid files could be pulled from: {}...".format(input_group))
+            print(
+                "\nPlease ensure there are CSV or XLSX files at the root of the folder"
+            )
 
         for f in files:
-            print('Now reviewing', f)
+            print("Now reviewing", f)
             if dynaiello is None:
                 # start condition
                 dynaiello = Dynaiello(start_dir, destination, f, views)

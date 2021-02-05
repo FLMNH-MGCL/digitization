@@ -16,16 +16,25 @@ class Tracker:
 
 
 def cli():
-    my_parser = argparse.ArgumentParser(description="Track the used MGCL numbers in the filesystem",
-                                        formatter_class=argparse.RawDescriptionHelpFormatter,
-                                        epilog=textwrap.dedent('''\
+    my_parser = argparse.ArgumentParser(
+        description="Track the used MGCL numbers in the filesystem",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=textwrap.dedent(
+            """\
           Example Runs:
             python3 ./mgcl_tracker.py --start_dir /fake/path \n
             python3 ./mgcl_tracker.py --start_dir /fake/path 
-         '''))
+         """
+        ),
+    )
 
-    my_parser.add_argument('-d', '--start_dir', required=True,
-                           type=str, help="path to the starting directory")
+    my_parser.add_argument(
+        "-d",
+        "--start_dir",
+        required=True,
+        type=str,
+        help="path to the starting directory",
+    )
 
     args = my_parser.parse_args()
 
