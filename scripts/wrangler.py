@@ -49,6 +49,7 @@ class FSLocation:
         self.path = path
 
 
+# TODO: scan_id ??
 class Specimen:
     def __init__(
         self,
@@ -60,6 +61,7 @@ class Specimen:
         spec_epithet,
         record_id,
         references,
+        scan_id,
     ):
         self.bombID = None
         self.catalog_number = catalog_number
@@ -70,6 +72,7 @@ class Specimen:
         self.spec_epithet = spec_epithet
         self.record_id = record_id
         self.references = references
+        self.scan_id = scan_id
 
         self.occurrences = []
 
@@ -310,6 +313,10 @@ class Wrangler:
                 spec_epithet = str(row["specificEpithet"])
                 record_id = str(row["recordId"])
                 references = str(row["references"])
+                scan_id = None
+
+                if "scan_id" in row:
+                    scan_id = str(row["scan_id"])
 
                 specimen = Specimen(
                     catalog_number,
@@ -320,6 +327,7 @@ class Wrangler:
                     spec_epithet,
                     record_id,
                     references,
+                    scan_id,
                 )
 
                 if catalog_number in self.specimens:
@@ -476,12 +484,25 @@ class Wrangler:
 
                     needs_new_row = False
 
+                    row["recordId"] = specimen.record_id
+                    row["references"] = specimen.references
+                    row["scientificName"] = specimen.sci_name
+
+                    if "scan_id" in row:
+                        row["scan_id"] = specimen.scan_id
+
             if len(matches) > 0 and needs_new_row:
                 template = matches[0].copy()
 
                 new_row = reset_row(template)
 
                 new_row["catalogNumber"] = catalogNumber
+                new_row["recordId"] = specimen.record_id
+                new_row["references"] = specimen.references
+                new_row["scientificName"] = specimen.sci_name
+
+                if "scan_id" in new_row:
+                    new_row["scan_id"] = specimen.scan_id
 
                 if len(specimen.occurrences) > 0:
                     new_row["Image1_file_name"] = Path(specimen.occurrences[0]).stem
@@ -623,7 +644,13 @@ def cli():
     )
 
     wrangler.run()
+
     print("\nAll computations completed...")
+    print(
+        "Log may be found at {}".format(
+            os.path.join(wrangler.start_dir, "wrangler.log")
+        )
+    )
 
 
 if __name__ == "__main__":
