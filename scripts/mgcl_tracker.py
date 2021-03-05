@@ -5,10 +5,6 @@ import re
 import logging
 
 
-def ext_to_re(extensions):
-    return "[{}]".format("|".join(extensions))
-
-
 class Tracker:
     def __init__(self, start_dir, lower, upper, exts):
         self.start_dir = start_dir
@@ -16,7 +12,8 @@ class Tracker:
         self.upper = int(upper)
         self.exts = tuple(exts)
 
-        self.accounted_for = dict()
+        self.accounted_for = {i: False for i in range(self.lower, self.upper + 1)}
+        self.missing = dict()
 
         logging.basicConfig(
             level=logging.NOTSET,
@@ -33,7 +30,11 @@ class Tracker:
         nums = self.extract_number(file)
 
         if not nums or len(nums) > 1:
-            print("TODO: handle me")
+            logging.error(
+                "Unexpected file naming scheme @ {}: expected single number, recieved: {}".format(
+                    file, nums
+                )
+            )
             return
 
         try:
@@ -42,29 +43,93 @@ class Tracker:
             if num < self.lower or num > self.upper:
                 logging.debug("{} in {} not in range...".format(num, file))
                 return
-            elif num in self.accounted_for:
-                logging.debug(
-                    "{} in {} already accounted for in different file...".format(
+            elif num not in self.accounted_for:
+                logging.error(
+                    "unexpected error: number {} extracted from {} is not in dictionary but is somehow in range...".format(
                         num, file
                     )
                 )
                 return
-            else:
+            elif not self.accounted_for[num]:
                 logging.debug("{} in {} is in range...".format(num, file))
                 self.accounted_for[num] = True
         except ValueError:
-            print("error logged @ {}...".format(nums[0]))
+            # print("error logged @ {}...".format(nums[0]))
             logging.error("Could not parse number in filename: {}".format(nums[0]))
-        except:
-            print("TODO: handle me")
+        except Exception as e:
+            # print("unknwon error occurred:", e)
+            logging.error("unknwon error occurred: {}".format(e))
+
+    def write_missing(self):
+        print(
+            "Logging numbers that could not be located (this may take time)...", end=""
+        )
+
+        with open(
+            os.path.join(self.start_dir, "tracker_missing_numbers.txt"), "w"
+        ) as f:
+            for num, _ in self.missing.items():
+                f.write("{}\n".format(num))
+
+        print(" done!")
+
+    def write_found(self):
+        print(
+            "Logging numbers that were located (this may take time)...",
+            end="",
+        )
+
+        with open(os.path.join(self.start_dir, "tracker_found_numbers.txt"), "w") as f:
+            for num, _ in self.accounted_for.items():
+                f.write("{}\n".format(num))
+
+        print(" done!\n")
+
+        # print(
+        #     " done!\n\n{} Found numbers written to".format(len(self.accounted_for)),
+        #     os.path.abspath(os.path.join(self.start_dir, "tracker_found_numbers.txt")),
+        # )
+
+    def write_out(self):
+        self.write_missing()
+        self.write_found()
+
+        print(
+            len(self.missing),
+            "missing numbers total, written to",
+            os.path.abspath(
+                os.path.join(self.start_dir, "tracker_missing_numbers.txt")
+            ),
+            end="\n\n",
+        )
+
+        print(
+            len(self.accounted_for),
+            "found numbers total, written to",
+            os.path.abspath(os.path.join(self.start_dir, "tracker_found_numbers.txt")),
+        )
 
     def run(self):
+        print("Starting os walk...", end="")
         for p, d, f in os.walk(self.start_dir):
             for file in f:
                 if file.endswith(self.exts):
                     self.check_file(file)
+        print(" done!\n")
 
-        return len(self.accounted_for)
+        print("All files handled...\n")
+
+        self.missing = dict(
+            filter(lambda el: el[1] == False, self.accounted_for.items())
+        )
+
+        self.accounted_for = dict(
+            filter(lambda el: el[1] == True, self.accounted_for.items())
+        )
+
+        self.write_out()
+
+        # return len(self.accounted_for)
 
 
 def cli():
@@ -127,14 +192,15 @@ def cli():
     print("Program starting...\n")
 
     tracker = Tracker(start_dir, lower, upper, exts)
-    unique_occurrences = tracker.run()
+    # unique_occurrences = tracker.run()
+    tracker.run()
 
-    print("\nAll computations completed...\n")
-    print(
-        "Found {} unique instances of MGCL numbers in range: {} <= num <= {}".format(
-            unique_occurrences, int(lower), int(upper)
-        )
-    )
+    print("\nAll computations completed...")
+    # print(
+    #     "Found {} unique instances of MGCL numbers in range: {} <= num <= {}".format(
+    #         unique_occurrences, int(lower), int(upper)
+    #     )
+    # )
 
 
 if __name__ == "__main__":
