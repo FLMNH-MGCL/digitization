@@ -211,8 +211,9 @@ def cli():
         epilog=textwrap.dedent(
             """\
           Example Runs:
-            python3 ./mgcl_tracker.py --start_dir /fake/path --lower 1234567 --upper 2000000 \n
-            python3 ./mgcl_tracker.py --start_dir /fake/path --lower 1234567 --upper 2000000 --exts png jpg
+            python3 ./mgcl_tracker.py --start_dir /fake/path --range 1234567 2000000
+            python3 ./mgcl_tracker.py --start_dir /fake/path --range 1234567 2000000 --exts png jpg
+            python3 ./mgcl_tracker.py --start_dir /fake/path --file /fake/path/file.csv
          """
         ),
     )
@@ -240,7 +241,8 @@ def cli():
         "-r",
         "--range",
         nargs=2,
-        help="The lower and upper bound MGCL numbers"
+        metavar=('LOWER', 'UPPER'),
+        help="The lower and upper bound MGCL numbers, from LOWER to UPPER (inclusive)"
     )
 
     group.add_argument(
