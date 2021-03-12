@@ -230,7 +230,7 @@ class Dynaiello:
         try:
             # TODO: should this be a list??
             csvView = item["view"].strip()
-        except:
+        except Exception:
             # I don't really need to do anything
             pass
 
@@ -287,7 +287,8 @@ class Dynaiello:
             shutil.copy(file_path, os.path.join(self.destination, new_name))
 
             data_point = DataPoint(
-                catalogNumber, file_path, os.path.join(self.destination, new_name)
+                catalogNumber, file_path, os.path.join(
+                    self.destination, new_name)
             )
 
             self.append_data_point(data_point)
@@ -317,7 +318,8 @@ class Dynaiello:
         self.find_item(path, item)
 
     def write_log(self):
-        log_filename = Dynaiello.generate_logname("DYNAIELLO", self.destination)
+        log_filename = Dynaiello.generate_logname(
+            "DYNAIELLO", self.destination)
 
         with open(log_filename, "a") as log:
             log.write("sheet_name,catalogNumber,found_at,relocated_to\n")
@@ -347,7 +349,7 @@ class Dynaiello:
         for _id, item in self.raw_data.iterrows():
             try:
                 print("\nLooking for {}...\n".format(item["catalogNumber"]))
-            except:
+            except Exception:
                 print(
                     "dynaiello.py: error: no catalogNumber column present... skipping entry"
                 )

@@ -34,7 +34,8 @@ class Suspector:
 
         if ext != passed_ext.lower():
             error_message(
-                "passed extension {} must match either csv or xlsx".format(passed_ext)
+                "passed extension {} must match either csv or xlsx".format(
+                    passed_ext)
             )
 
         return True
@@ -68,7 +69,7 @@ class Suspector:
 
                 ranges.append(lower)
                 ranges.append(upper)
-            except:
+            except Exception:
                 error_message(
                     "missing either 'lower' or 'upper' bounds column in file. please run --help command to see supported structure for file inputs"
                 )
@@ -118,7 +119,7 @@ class Suspector:
             try:
                 lower = int(ranges[i])
                 upper = int(ranges[i + 1])
-            except:
+            except Exception:
                 error_message(
                     "invalid ranges provided. Could not convert {} or {} to an integer type.".format(
                         lower, upper
@@ -126,7 +127,8 @@ class Suspector:
                 )
 
             if not Suspector.validate_range(lower, upper):
-                error_message("invalid bounds in range {} - {}".format(lower, upper))
+                error_message(
+                    "invalid bounds in range {} - {}".format(lower, upper))
 
             tuple_ranges.append(tuple((lower, upper)))
 
@@ -210,7 +212,7 @@ class Suspector:
             try:
                 collected_number = int(matches.group(0))
                 invalid = self.is_in_ranges(collected_number)
-            except:
+            except Exception:
                 print(
                     "{}...".format(f),
                     "failed! Something went wrong while handling file!",
@@ -231,8 +233,8 @@ class Suspector:
 
 
 # TODO: make me so I can import this file into other python scripts
-def lib():
-    pass
+# def lib():
+#     pass
 
 
 def cli():
@@ -270,7 +272,8 @@ def cli():
         dest="ranges",
         help="List of ranges",
     )
-    group.add_argument("-c", "--csv_file", action="store", help="path to CSV of ranges")
+    group.add_argument("-c", "--csv_file", action="store",
+                       help="path to CSV of ranges")
     group.add_argument(
         "-e", "--excel_file", action="store", help="path to excelsheet of ranges"
     )

@@ -58,17 +58,20 @@ class Relocator:
             and pathlib.Path(log).suffix != ".csv"
         ):
             error_message(
-                "{} either does not exist or is the wrong file type".format(log)
+                "{} either does not exist or is the wrong file type".format(
+                    log)
             )
 
         if not os.path.exists(destination) and not os.path.isdir(destination):
             error_message(
-                "{} either does not exist or is not a directory".format(destination)
+                "{} either does not exist or is not a directory".format(
+                    destination)
             )
 
     def relocate(self, old_location, filename):
         new_filename = filename
-        tentative_path = os.path.abspath(os.path.join(self.destination, new_filename))
+        tentative_path = os.path.abspath(
+            os.path.join(self.destination, new_filename))
         raw_path = pathlib.Path(tentative_path)
         ext = raw_path.suffix
         i = 1
@@ -76,11 +79,13 @@ class Relocator:
         while os.path.exists(tentative_path):
             new_filename = raw_path.stem + "_DUP_{}".format(i)
             tentative_path = os.path.abspath(
-                os.path.join(self.destination, "{}{}".format(new_filename, ext))
+                os.path.join(self.destination,
+                             "{}{}".format(new_filename, ext))
             )
             i += 1
 
-        print("attempting copy of {} to {}".format(old_location, tentative_path))
+        print("attempting copy of {} to {}".format(
+            old_location, tentative_path))
         shutil.copyfile(old_location, tentative_path)
 
     def mgclchecker(self):
@@ -91,7 +96,7 @@ class Relocator:
 
             try:
                 path = str(row["path"])
-            except:
+            except Exception:
                 error_message(
                     "csv file improperly formatted for MGCLChecker relocation. attempted access to 'path' header, returned None"
                 )
@@ -123,8 +128,8 @@ class Relocator:
 
 
 # TODO: make me so I can import this file into other python scripts
-def lib():
-    pass
+# def lib():
+#     pass
 
 
 def cli():
@@ -163,7 +168,7 @@ def cli():
 
     try:
         config = ConfigTypes[args.config]
-    except:
+    except Exception:
         error_message(
             "{} is not a valid config type. run '--help' to see all accepted configurations"
         )
@@ -173,7 +178,8 @@ def cli():
 
     Relocator.check_valid_construction(log, destination)
 
-    relocator = Relocator(config, os.path.abspath(log), os.path.abspath(destination))
+    relocator = Relocator(config, os.path.abspath(log),
+                          os.path.abspath(destination))
     print("Program starting...\n")
     relocator.run()
     print("\nAll computations completed...")
