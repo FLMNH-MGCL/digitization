@@ -33,9 +33,6 @@ class App:
             self.aiello.run()
         elif selection == "convert":
             self.converter.run()
-            pass
-        elif selection == "datamatrix":
-            pass
         elif selection == "hlopp":
             self.hlopp.run()
         elif selection == "legacyUp":
@@ -65,25 +62,23 @@ class App:
             return "aiello"
         elif selection.lower() in ["2", "convert"]:
             return "convert"
-        elif selection.lower() in ["3", "datamatrix"]:
-            return "datamatrix"
-        elif selection.lower() in ["4", "hlopp"]:
+        elif selection.lower() in ["3", "hlopp"]:
             return "hlopp"
-        elif selection.lower() in ["5", "legacy upgrade", "legacy upgrade project"]:
+        elif selection.lower() in ["4", "legacy upgrade", "legacy upgrade project"]:
             return "legacyUp"
-        elif selection.lower() in ["6", "rename"]:
+        elif selection.lower() in ["5", "rename"]:
             return "rename"
-        elif selection.lower() in ["7", "rescale"]:
+        elif selection.lower() in ["6", "rescale"]:
             return "rescale"
-        elif selection.lower() in ["8", "uniquer"]:
+        elif selection.lower() in ["7", "uniquer"]:
             return "uniquer"
-        elif selection.lower() in ["9", "zipper"]:
+        elif selection.lower() in ["8", "zipper"]:
             return "zipper"
-        elif selection.lower() in ["10", "undo"]:
+        elif selection.lower() in ["9", "undo"]:
             return "undo"
-        elif selection.lower() in ["11", "mgcl"]:
+        elif selection.lower() in ["10", "mgcl"]:
             return "mgcl"
-        elif selection.lower() in ["12", "mover"]:
+        elif selection.lower() in ["11", "mover"]:
             return "mover"
         elif selection.lower() == "exit":
             return "exit"
@@ -95,16 +90,15 @@ class App:
             "Select program to load:\n\n"
             "[1] Aiello Project\n"
             "[2] Convert CR2 -> JPG\n"
-            "[4] Datamatrix Project\n"
-            "[4] Hlopp Project\n"
-            "[5] Legacy Upgrade Project\n"
-            "[6] Rename Project (Legacy)\n"
-            "[7] Rescale JPGs (Downscaler)\n"
-            "[8] Unique Value Tool (Database CSV)\n"
-            "[9] Zipper Tool\n"
-            "[10] Undo Tool\n"
-            "[11] MGCL Checker\n"
-            "[12] Batch Mover\n\n"
+            "[3] Hlopp Project\n"
+            "[4] Legacy Upgrade Project\n"
+            "[5] Rename Project (Legacy)\n"
+            "[6] Rescale JPGs (Downscaler)\n"
+            "[7] Unique Value Tool (Database CSV)\n"
+            "[8] Zipper Tool\n"
+            "[9] Undo Tool\n"
+            "[10] MGCL Checker\n"
+            "[11] Batch Mover\n\n"
             "or 'exit' to quit.\n\n--> "
         )
 
