@@ -23,10 +23,8 @@ def mgcl_tracker_parser(sub_parsers, parent):
     else:
         mgcl_tracker_parser = sub_parsers.add_parser(
             name="mgcl_tracker",
-            description=description,
             add_help=False,
             help=description,
-            parents=[parent],
         )
 
     mgcl_tracker_parser.add_argument(

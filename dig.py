@@ -1,5 +1,15 @@
 import argparse
 from parsers import mgcl_tracker_parser
+from scripts import (
+    # dynaiello,
+    # gene_copy,
+    mgcl_tracker,
+    # protein_combine,
+    # relocate,
+    # suspect_numbers,
+    # unique_values,
+    # wrangler,
+)
 
 ############### PROOF OF CONCEPT ###############
 # i.e. not ready for usage
@@ -12,14 +22,20 @@ from parsers import mgcl_tracker_parser
 #   prints mgcl_tracker help
 ###############################################
 
-main_parser = argparse.ArgumentParser(
-    description="Select and run a digitization script", add_help=True
-)
 
-sub_parsers = main_parser.add_subparsers(title="Available Scripts")
-sub_parsers.required = True
+def main():
+    main_parser = argparse.ArgumentParser(
+        description="Select and run a digitization script", add_help=True
+    )
 
-# i need to figure out a better module/function naming scheme for this
-mgcl_tracker = mgcl_tracker_parser.mgcl_tracker_parser(sub_parsers, main_parser)
+    sub_parsers = main_parser.add_subparsers(dest="scripts")
+    mgcl_tracker_parser.mgcl_tracker_parser(sub_parsers, main_parser)
 
-args = main_parser.parse_args()
+    args = main_parser.parse_args()
+
+    if args.scripts == "mgcl_tracker":
+        mgcl_tracker.run(args)
+
+
+if __name__ == "__main__":
+    main()

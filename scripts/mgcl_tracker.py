@@ -217,6 +217,29 @@ def parse_csv(csv_file):
         )
 
 
+def run(args):
+    start_dir = args.start_dir
+    csv_file = args.file
+    _range = args.range
+    exts = args.exts
+
+    # nums will be assigned to the Tracker classes main dictionary if it is not None,
+    # i.e. the CSV/XLSX would be converted to the structure of { mgcl_num : True/False }.
+    # This if statement will parse the passed in file if present, otherwise assign it None.
+    nums = parse_csv(csv_file) if csv_file is not None else None
+
+    print(
+        "**WARNING: This script indexes all files recursively from the start. As a result, this can take an exceptional amount of time for large targets.**\n"
+    )
+
+    print("Program starting...\n")
+
+    tracker = Tracker(start_dir, _range, nums, exts)
+    tracker.run()
+
+    print("\nAll computations completed...")
+
+
 # this is the CLI driver for the script. It just defines the accepted CLI arguments
 # and then instantiates the Tracker class to run the task.
 def cli():
@@ -265,27 +288,6 @@ def cli():
     group.add_argument("-f", "--file", help="A CSV of MGCL Numbers to search for")
 
     args = parser.parse_args()
-
-    start_dir = args.start_dir
-    csv_file = args.file
-    _range = args.range
-    exts = args.exts
-
-    # nums will be assigned to the Tracker classes main dictionary if it is not None,
-    # i.e. the CSV/XLSX would be converted to the structure of { mgcl_num : True/False }.
-    # This if statement will parse the passed in file if present, otherwise assign it None.
-    nums = parse_csv(csv_file) if csv_file is not None else None
-
-    print(
-        "**WARNING: This script indexes all files recursively from the start. As a result, this can take an exceptional amount of time for large targets.**\n"
-    )
-
-    print("Program starting...\n")
-
-    tracker = Tracker(start_dir, _range, nums, exts)
-    tracker.run()
-
-    print("\nAll computations completed...")
 
 
 if __name__ == "__main__":
