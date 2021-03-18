@@ -287,7 +287,7 @@ def cli():
 
     group.add_argument("-f", "--file", help="A CSV of MGCL Numbers to search for")
 
-    args = parser.parse_args()
+    run(parser.parse_args())
 
 
 if __name__ == "__main__":
