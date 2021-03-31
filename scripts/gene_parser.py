@@ -209,9 +209,6 @@ class GeneParser:
                 if not header_line:
                     break
 
-                # gene_line = f.readline()
-
-                # gene = tuple((header_line.strip(), gene_line.strip()))
                 gene = GeneParser.parse_gene_header(header_line.strip())
                 self.genes.append(gene)
 

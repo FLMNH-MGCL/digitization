@@ -218,6 +218,7 @@ def extract_filter(argument_list, arg_len):
 def main():
     argument_list = sys.argv
     arg_len = len(argument_list)
+
     filter = extract_filter(argument_list, arg_len)
 
     if filter[0] == "BAD":
@@ -273,8 +274,6 @@ def main():
         else:
             # unknown option
             print("Unknown usage.")
-
-        # input("Press enter to exit...")
 
 
 if __name__ == "__main__":

@@ -106,7 +106,7 @@ class Uniquer:
             for col in self.group_by:
                 try:
                     self.raw_data[col]
-                except:
+                except Exception:
                     error_message(
                         "{} does not exist in the provided input file".format(col)
                     )
@@ -115,7 +115,7 @@ class Uniquer:
             for col in self.group_for:
                 try:
                     self.raw_data[col]
-                except:
+                except Exception:
                     error_message(
                         "{} does not exist in the provided input file".format(col)
                     )
@@ -134,7 +134,6 @@ class Uniquer:
 
     def write_groups(self):
         logfile = Uniquer.generate_logname("UNIQUE_VALUES", self.destination)
-        # merged = None
         for heading, frame in self.unique_frames:
             with open(logfile, "a") as f:
                 f.write(heading + "\n")
@@ -149,11 +148,6 @@ class Uniquer:
         # print(merged)
 
     def run(self):
-
-        # print("\nParsing CSV...\n")
-        # self.raw_csv_data = pd.read_csv(
-        #     self.csv_path, header=0, encoding="ISO-8859-1", low_memory=False)
-
         if self.group_by:
             if self.group_for is not None:
                 for col in self.group_for:

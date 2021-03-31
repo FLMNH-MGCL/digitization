@@ -10,7 +10,20 @@ $ pip3 install --user -r requirements.txt
 
 ## Scripts
 
-There is a selection of scripts available in the [`scripts`](https://github.com/FLMNH-MGCL/digitization/tree/main/scripts) directory. They all have unique CLI structures, so be sure to run whichever is needed with the `--help` flag to get started.
+There is a selection of scripts available in the [`scripts`](https://github.com/FLMNH-MGCL/digitization/tree/main/scripts) directory. They all have unique CLI structures, so be sure to run whichever is needed with the `--help` flag to get started. The below table provides a brief overview for each script:
+
+| Script               | Description                                                                                                |
+| -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `dynaiello.py`       | A version of the Aiello script with less column restrictions. Copy and rename entries based on a CSV file. |
+| `gene_copy.py`       | Removes divergent consensus sequences (IBA pipeline) from .fas/.fasta files                                |
+| `gene_parser.py`     | Parses .fa/.fasta files to extract accession numbers and gene names                                        |
+| `mgcl_tracker.py`    | Tracks the used catalog numbers in the filesystem against a range/csv of numbers                           |
+| `protein_combine.py` | Combines separated protein/nucleotide files into one combined file                                         |
+| `relocate.py`        | _(deprecated)_ Relocates 'troublesome' images based on the log output of other scripts                     |
+| `suspect_numbers.py` | Agreggates 'suspect' catalog numbers in a filesystem                                                       |
+| `unique_values.py`   | Outputs all the unique values in the columns of a CSV or XLSX file                                         |
+| `wls.py`             | _(deprecated)_ Generates CSV of specimen at current working directory                                      |
+| `wrangler.py`        | Assigns BOMBID numbers to collection specimen                                                              |
 
 ## Digitization Program
 
