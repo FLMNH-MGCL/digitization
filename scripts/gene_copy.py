@@ -142,7 +142,7 @@ def run(fas):
 
 
 # this is the CLI driver for the script. It just defines the accepted CLI arguments
-# and then instantiates the Tracker class to run the task.
+# and then calls the run function
 def cli():
     parser = argparse.ArgumentParser(
         description="Remove duplicate values in .fas/.fasta files",
