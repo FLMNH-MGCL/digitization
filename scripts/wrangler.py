@@ -8,6 +8,7 @@ import pandas as pd
 from pathlib import Path, PureWindowsPath
 import glob
 from Helpers import Helpers
+from datetime import datetime
 import logging
 import inspect
 
@@ -63,7 +64,7 @@ class Specimen:
         references,
         scan_id,
     ):
-        self.bombID = None
+        self.bomb_id = None
         self.catalog_number = catalog_number
         self.other_catalog_numbers = other_catalog_numbers
         self.family = family
@@ -78,7 +79,7 @@ class Specimen:
 
     def __str__(self):
         return "\tbombID: {},\n\tcatalogNumber: {},\n\totherCatalogNumber: {},\n\tfamily: {},\n\tgenus: {},\n\tsepcies: {},\n\trecordId: {},\n\trefs: {},\n\toccurrences: {}".format(
-            self.bombID,
+            self.bomb_id,
             self.catalog_number,
             self.other_catalog_numbers,
             self.family,
@@ -128,8 +129,7 @@ class Wrangler:
         self,
         start_dir,
         config_location,
-        excel_file,
-        csv_file,
+        file,
         sheet_id,
         sheet_url,
         worksheet,
@@ -141,12 +141,8 @@ class Wrangler:
         else:
             self.gconnection = GDriveConnector(sheet_id, None, config_location)
 
-        if excel_file is None:
-            self.csv_file = csv_file
-            self.raw_data = Wrangler.parse_file(self.csv_file, True)
-        else:
-            self.excel_file = excel_file
-            self.raw_data = Wrangler.parse_file(self.excel_file, False)
+        self.file = file
+        self.raw_data = Wrangler.parse_file(self.file)
 
         self.start_dir = start_dir
 
@@ -168,57 +164,48 @@ class Wrangler:
         self.narrow = narrow
 
     @staticmethod
-    def check_valid_sources(filepath, ext):
-        # check file existence
-        if not os.path.exists(filepath):
-            error_message("provided file does not exist in the fs")
-
-        # check if file is actually a file
-        if os.path.exists(filepath) and not os.path.isfile(filepath):
-            error_message(
-                "provided file is not of the correct type (i.e. it is not a file)"
-            )
-
-        # check file extension
-        # TODO: update to use pathlib
-        file_vec = os.path.basename(filepath).split(".")
-        if len(file_vec) < 2:
-            error_message("provided file is missing a valid extension")
-
-        passed_ext = file_vec[1]
-
-        if ext != passed_ext.lower():
-            error_message(
-                "passed extension {} must match either csv or xlsx".format(passed_ext)
-            )
-
-        return True
-
-    @staticmethod
-    def parse_file(file_path, is_csv):
+    def parse_file(file_path):
         """
         Attempts to parse CSV or Excel data of specimen
 
         :param file_path: The os path str to the CSV file
         :type file_path: str
 
-        :param is_csv: whether or not file is a CSV
-        :type is_csv: bool
-
         :return: DataFrame
         """
-        ext = "csv" if is_csv else "xlsx"
 
-        Wrangler.check_valid_sources(file_path, ext)
+        path_obj = Path(file_path)
+        ext = path_obj.suffix
 
-        raw_data = None
+        if ext is None:
+            error_message("input_file missing extension")
 
-        if is_csv:
-            raw_data = pd.read_csv(file_path)
+        ext = ext.replace(".", "")
+
+        if ext.lower() != "csv" and ext.lower() != "xlsx":
+            error_message(
+                "input_file extension {} must match either csv or xlsx (ignoring case)".format(
+                    ext
+                )
+            )
+
+        # there are two separate functions for pandas to read either a CSV or XLSX,
+        # but the return of each is the same DataFrame type.
+        if ext.lower() == "csv":
+            return pd.read_csv(file_path)
+        elif ext.lower() == "xlsx":
+            try:
+                return pd.read_excel(file_path)
+            except Exception:
+                return pd.read_excel(file_path, engine="openpyxl")
         else:
-            raw_data = pd.read_excel(file_path)
-
-        return raw_data
+            # this error logically should not ever be hit, because of the extension
+            # check above, however I added it for safety.
+            error_message(
+                "Invalid file provided: expected .csv or .xlsx, recieved {}".format(
+                    ext.lower()
+                )
+            )
 
     def add_duplicate(self, specimen):
         if specimen.catalog_number in self.duplicates:
@@ -262,10 +249,9 @@ class Wrangler:
 
         try:
             family_genus = PureWindowsPath(family_genus).as_posix()
-        except:
+        except Exception:
             # not on windows, no need to worry about this
             family_genus = family_genus.group()
-            pass
 
         family_genus_vec = family_genus.split("/")
 
@@ -273,6 +259,19 @@ class Wrangler:
             return None
 
         return family_genus_vec
+
+    @staticmethod
+    def create_new_ws(connection, current_ws, df):
+        now = datetime.now()
+        time = now.strftime("%m-%d-%Y, %H:%M:%S")
+        while True:
+            suffix = "_UPDATED_{}".format(time)
+            try:
+                return connection.document.add_worksheet(
+                    current_ws.title + suffix, len(df.index), len(df.columns)
+                )
+            except Exception:
+                time = now.strftime("%m-%d-%Y (%H:%M:%S)")
 
     def collect_files(self):
         """
@@ -282,15 +281,19 @@ class Wrangler:
         """
 
         if self.narrow:
+            print("narrow parameter used: will isolate folders accordingly...\n")
+
             globs = []
             for family in self.narrow:
-                startPath = os.path.join(self.start_dir, family)
+                start_path = os.path.join(self.start_dir, family)
 
-                print("searching for", family, "at", startPath, end="...")
+                print("collecting files for", family, "at", start_path, end="...")
 
                 globs += glob.glob(
                     "{}/**/*.*".format(os.path.join(self.start_dir, family))
                 )
+
+                print("collected!")
 
             return globs
 
@@ -346,6 +349,54 @@ class Wrangler:
 
         print("All rows handled, specimen objects created\n")
 
+    def check_for_match(self, file, catalog_number, family, genus):
+        specimen = self.specimens[catalog_number]
+
+        if not isinstance(specimen, Specimen):
+            logging.warning(
+                "Invalid specimen detected from csv/excel: {}".format(specimen)
+            )
+
+        # ignoring case, do the family and genus pairs match (i.e. are they the same)
+        elif str_cmp(specimen.family, family) and str_cmp(specimen.genus, genus):
+            # if they matched ignoring case but don't match when not ignoring case,
+            # i send a warning in the log. This is not breaking, however warrants at the
+            # very least a warning.
+            if not str_cmp(specimen.family, family, False) or not str_cmp(
+                specimen.genus, genus, False
+            ):
+                logging.warning(
+                    "Detected mixed capitalization @ {}\nExpected Family,Genus: {},{}\nFound:{},{}".format(
+                        catalog_number,
+                        family,
+                        genus,
+                        specimen.family,
+                        specimen.genus,
+                    )
+                )
+
+            # append to specimen occurrences
+            specimen.occurrences.append(file)
+            logging.info(
+                "Appended {} to list of occurrences @ {}...".format(
+                    catalog_number, file
+                )
+            )
+
+        else:
+            # log this, found MGCL number but information differs about its
+            # data than what was extracted from CSV
+            logging.warning(
+                "Found {} @ {} - information differs about its data than what was extracted from csv/xlsx...\nExpected Family,Genus: {},{}\nFound: {},{}".format(
+                    catalog_number,
+                    file,
+                    family,
+                    genus,
+                    specimen.family,
+                    specimen.genus,
+                )
+            )
+
     def find_in_fs(self):
         print("Searching fs for files, this may take some time...\n")
         # collect all files
@@ -374,55 +425,99 @@ class Wrangler:
 
             if catalog_number in self.specimens:
                 # check if family and genus match
-                specimen = self.specimens[catalog_number]
+                self.check_for_match(f, catalog_number, family, genus)
 
-                if not isinstance(specimen, Specimen):
-                    logging.warning(
-                        "Invalid specimen detected from csv/excel: {}".format(specimen)
-                    )
-                    continue
+    def _handle_alter_row(self, row, catalog_number, specimen):
+        row["catalogNumber"] = catalog_number
 
-                if str_cmp(specimen.family, family) and str_cmp(specimen.genus, genus):
-                    # it doesn't match when factoring in case
-                    if str_cmp(specimen.family, family, False) or str_cmp(
-                        specimen.genus, genus, False
-                    ):
-                        logging.warning(
-                            "Detected mixed capitalization @ {}\nExpected Family,Genus: {},{}\nFound:{},{}".format(
-                                catalog_number,
-                                family,
-                                genus,
-                                specimen.family,
-                                specimen.genus,
-                            )
-                        )
+        if len(specimen.occurrences) > 0:
+            row["Image1_file_name"] = Path(specimen.occurrences[0]).stem
 
-                    # append to specimen occurrences
-                    specimen.occurrences.append(f)
-                    logging.info(
-                        "Appended {} to list of occurrences @ {}...".format(
-                            catalog_number, f
-                        )
+            if len(specimen.occurrences) == 2:
+                row["Image2_file_name"] = Path(specimen.occurrences[1]).stem
+
+                logging.info(
+                    "Recorded specimen, assigned {}: catalogNumber: {}, Image_1_file_name: {}, Image2_file_name: {}".format(
+                        row["Bombycoid_UI"],
+                        catalog_number,
+                        Path(specimen.occurrences[0]).stem,
+                        Path(specimen.occurrences[1]).stem,
                     )
-                else:
-                    # log this, found MGCL number but information differs about its
-                    # data than what was extracted from CSV
-                    logging.warning(
-                        "Found {} @ {} - information differs about its data than what was extracted from csv/xlsx...\nExpected Family,Genus: {},{}\nFound: {},{}".format(
-                            catalog_number,
-                            f,
-                            family,
-                            genus,
-                            specimen.family,
-                            specimen.genus,
-                        )
+                )
+            else:
+                logging.info(
+                    "Recorded specimen, assigned {}: catalogNumber: {}, Image_1_file_name: {}".format(
+                        row["Bombycoid_UI"],
+                        catalog_number,
+                        Path(specimen.occurrences[0]).stem,
                     )
+                )
+
+    def _handle_insert_row(self, new_row, catalog_number, specimen, df):
+        new_row["catalogNumber"] = catalog_number
+        new_row["recordId"] = specimen.record_id
+        new_row["references"] = specimen.references
+        new_row["scientificName"] = specimen.sci_name
+
+        if "scan_id" in new_row:
+            new_row["scan_id"] = specimen.scan_id
+
+        if len(specimen.occurrences) > 0:
+            new_row["Image1_file_name"] = Path(specimen.occurrences[0]).stem
+
+            if len(specimen.occurrences) == 2:
+                new_row["Image2_file_name"] = Path(specimen.occurrences[1]).stem
+
+                logging.info(
+                    "Recorded specimen with new row, assigned {}: catalogNumber: {}, Image_1_file_name: {}, Image2_file_name: {}".format(
+                        new_row["Bombycoid_UI"],
+                        catalog_number,
+                        Path(specimen.occurrences[0]).stem,
+                        Path(specimen.occurrences[1]).stem,
+                    )
+                )
+            else:
+                logging.info(
+                    "Recorded specimen with new row, assigned {}: catalogNumber: {}, Image_1_file_name: {}".format(
+                        new_row["Bombycoid_UI"],
+                        catalog_number,
+                        Path(specimen.occurrences[0]).stem,
+                    )
+                )
+
+        df.append(new_row)
+
+    def _iter_matched_rows(self, rows, catalog_number, specimen):
+
+        needs_new_row = True
+
+        for row in rows:
+            if (
+                row["catalogNumber"]
+                or row["Image1_file_name"]
+                or row["Image2_file_name"]
+            ):
+                continue
+
+            else:
+                self._handle_alter_row(row, catalog_number, specimen)
+
+                needs_new_row = False
+
+                row["recordId"] = specimen.record_id
+                row["references"] = specimen.references
+                row["scientificName"] = specimen.sci_name
+
+                if "scan_id" in row:
+                    row["scan_id"] = specimen.scan_id
+
+        return needs_new_row
 
     def iter_specimen(self, df):
 
         df_dict = df.to_dict("records")
 
-        for catalogNumber, specimen in self.specimens.items():
+        for catalog_number, specimen in self.specimens.items():
             if not isinstance(specimen, Specimen):
                 logging.warning(
                     "Invalid specimen detected from csv/excel: {}".format(specimen)
@@ -446,88 +541,14 @@ class Wrangler:
                 )
             )
 
-            needs_new_row = True
-
-            for row in matches:
-                if (
-                    row["catalogNumber"]
-                    or row["Image1_file_name"]
-                    or row["Image2_file_name"]
-                ):
-                    continue
-
-                else:
-                    row["catalogNumber"] = catalogNumber
-
-                    if len(specimen.occurrences) > 0:
-                        row["Image1_file_name"] = Path(specimen.occurrences[0]).stem
-
-                        if len(specimen.occurrences) == 2:
-                            row["Image2_file_name"] = Path(specimen.occurrences[1]).stem
-
-                            logging.info(
-                                "Recorded specimen, assigned {}: catalogNumber: {}, Image_1_file_name: {}, Image2_file_name: {}".format(
-                                    row["Bombycoid_UI"],
-                                    catalogNumber,
-                                    Path(specimen.occurrences[0]).stem,
-                                    Path(specimen.occurrences[1]).stem,
-                                )
-                            )
-                        else:
-                            logging.info(
-                                "Recorded specimen, assigned {}: catalogNumber: {}, Image_1_file_name: {}".format(
-                                    row["Bombycoid_UI"],
-                                    catalogNumber,
-                                    Path(specimen.occurrences[0]).stem,
-                                )
-                            )
-
-                    needs_new_row = False
-
-                    row["recordId"] = specimen.record_id
-                    row["references"] = specimen.references
-                    row["scientificName"] = specimen.sci_name
-
-                    if "scan_id" in row:
-                        row["scan_id"] = specimen.scan_id
+            needs_new_row = self._iter_matched_rows(matches, catalog_number, specimen)
 
             if len(matches) > 0 and needs_new_row:
                 template = matches[0].copy()
 
                 new_row = reset_row(template)
 
-                new_row["catalogNumber"] = catalogNumber
-                new_row["recordId"] = specimen.record_id
-                new_row["references"] = specimen.references
-                new_row["scientificName"] = specimen.sci_name
-
-                if "scan_id" in new_row:
-                    new_row["scan_id"] = specimen.scan_id
-
-                if len(specimen.occurrences) > 0:
-                    new_row["Image1_file_name"] = Path(specimen.occurrences[0]).stem
-
-                    if len(specimen.occurrences) == 2:
-                        new_row["Image2_file_name"] = Path(specimen.occurrences[1]).stem
-
-                        logging.info(
-                            "Recorded specimen with new row, assigned {}: catalogNumber: {}, Image_1_file_name: {}, Image2_file_name: {}".format(
-                                new_row["Bombycoid_UI"],
-                                catalogNumber,
-                                Path(specimen.occurrences[0]).stem,
-                                Path(specimen.occurrences[1]).stem,
-                            )
-                        )
-                    else:
-                        logging.info(
-                            "Recorded specimen with new row, assigned {}: catalogNumber: {}, Image_1_file_name: {}".format(
-                                new_row["Bombycoid_UI"],
-                                catalogNumber,
-                                Path(specimen.occurrences[0]).stem,
-                            )
-                        )
-
-                df_dict.append(new_row)
+                self._handle_insert_row(new_row, catalog_number, specimen, df_dict)
 
         return pd.DataFrame.from_records(df_dict).sort_values(by="Bombycoid_UI")
 
@@ -550,9 +571,7 @@ class Wrangler:
 
         new_df.to_csv("test.csv")
 
-        new_sheet = self.gconnection.document.add_worksheet(
-            drive_sheet.title + "_UPDATED", len(new_df.index), len(new_df.columns)
-        )
+        new_sheet = Wrangler.create_new_ws(self.gconnection, drive_sheet, new_df)
 
         new_sheet.update([new_df.columns.values.tolist()] + new_df.values.tolist())
 
@@ -571,8 +590,8 @@ def cli():
         epilog=textwrap.dedent(
             """\
           Example Runs:
-            python3 ./wrangler.py --start_dir /fake/path --csv_file /path/to/file.csv --config ./config.json --sheet_id 1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw\n
-            python3 ./wrangler.py --start_dir /fake/path --csv_file /path/to/file.csv --config ./config.json --sheet_url https://docs.google.com/spreadsheets/d/1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw/edit#gid=1483107405
+            python3 ./wrangler.py --start_dir /fake/path --file /path/to/file.csv --config ./config.json --sheet_id 1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw\n
+            python3 ./wrangler.py --start_dir /fake/path --file /path/to/file.csv --config ./config.json --sheet_url https://docs.google.com/spreadsheets/d/1IIAp5sDSq61x1ZRmtbtcOSXoJ0QglJtilI6M6gUY3Dw/edit#gid=1483107405
          """
         ),
     )
@@ -604,12 +623,16 @@ def cli():
         help="Look for only specific family folders",
     )
 
-    group_files = my_parser.add_mutually_exclusive_group(required=True)
-    group_files.add_argument(
-        "-f", "--csv_file", action="store", help="path to CSV of specimen data"
-    )
-    group_files.add_argument(
-        "-e", "--excel_file", action="store", help="path to XLSX of specimen data"
+    # group_files = my_parser.add_mutually_exclusive_group(required=True)
+    # group_files.add_argument(
+    #     "-f", "--csv_file", action="store", help="path to CSV of specimen data"
+    # )
+    # group_files.add_argument(
+    #     "-e", "--excel_file", action="store", help="path to XLSX of specimen data"
+    # )
+
+    my_parser.add_argument(
+        "-f", "--file", action="store", help="path to csv/xlsx of specimen data"
     )
 
     group = my_parser.add_mutually_exclusive_group(required=True)
@@ -629,10 +652,9 @@ def cli():
     args = my_parser.parse_args()
 
     start_dir = args.start_dir
-    csv_file = args.csv_file
     worksheet = args.worksheet
     narrow = args.narrow
-    excel_file = args.excel_file
+    _file = args.file
     config = args.config
     sheet_id = args.sheet_id
     sheet_url = args.sheet_url
@@ -640,7 +662,7 @@ def cli():
     print("Program starting...\n")
 
     wrangler = Wrangler(
-        start_dir, config, excel_file, csv_file, sheet_id, sheet_url, worksheet, narrow
+        start_dir, config, _file, sheet_id, sheet_url, worksheet, narrow
     )
 
     wrangler.run()
@@ -670,7 +692,7 @@ given excel sheet:
   make dictionary -> map MGCL nums to specimen info
   loop rows:
     location obj: { dorsal, ventral, parent_directory }
-    specimen obj: { bombID, catalogNumber, otherCatalogNumber, family, genus, sepcies, recordId, refs, location_obj }
+    specimen obj: { bomb_id, catalogNumber, otherCatalogNumber, family, genus, sepcies, recordId, refs, location_obj }
     { catalogNumber : specimen_obj }
 
 CHECK IMG EXISTENCE IN FS
@@ -688,7 +710,9 @@ OBTAIN UI
 load premade dictionary of UIs
 loop dictionary entries:
   attempt access of UI by family, genus, species
-    if get UI -> assign object bombID
+    if get UI -> assign object bomb_id
 
 Insert images 1, 2 in row. Any additionals get added/appended as new row.
+
+python3 wrangler.py --start_dir /Volumes/flmnh/NaturalHistory/Lepidoptera/Kawahara/Digitization/LepNet/PINNED_COLLECTION/IMAGES_UPLOADED/IMAGES_UPLOADED_NAMED --config config.json -f ../testing/wrangler/Bombycoidea_5.xlsx -u https://docs.google.com/spreadsheets/d/12hPliU-tWEdrd9xxCEU7AW9s1O_D9wd5cTiwkKL1ZYE/edit#gid=515948364 -w MGCL_Image_IDs --narrow Apatelodidae Bombycidae
 """
