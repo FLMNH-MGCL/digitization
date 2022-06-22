@@ -1,5 +1,5 @@
 imageio==2.8.0
-numpy==1.18.1
+numpy==1.22.0
 pandas==1.2.1
 Pillow==7.1.0
 rawpy==0.14.0
